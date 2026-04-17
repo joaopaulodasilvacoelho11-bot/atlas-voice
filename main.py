@@ -18,7 +18,12 @@ from funcionalidades.memoria_persistente import (
     obter_historico,
 )
 from funcionalidades.alarmes import verificar_alarmes, criar_alarme, cancelar_alarme, listar_alarmes
-from funcionalidades.lembretes import verificar_lembretes
+from funcionalidades.lembretes import (
+    verificar_lembretes,
+    criar_lembrete,
+    cancelar_lembrete,
+    listar_lembretes,
+)
 
 _ARQUIVO_USUARIOS = DIRS["data"] / "usuarios.json"
 
@@ -224,6 +229,95 @@ def _tentar_criar_alarme(texto: str) -> str | None:
 
 
 # ---------------------------------------------------------------------------
+# Criação e cancelamento de lembrete via fala natural
+# ---------------------------------------------------------------------------
+
+_RE_LEMBRETE = re.compile(
+    r"\b(me\s+lembra\s+de?|lembra\s+de?|me\s+avisa\s+de?|avisa\s+de?|cria\s+lembrete|criar\s+lembrete|coloca\s+lembrete)\b",
+    re.IGNORECASE,
+)
+
+_RE_PRIORIDADE_LEMBRETE = re.compile(
+    r"\b(urgente|importante|alta\s+prioridade|prioridade\s+alta)\b",
+    re.IGNORECASE,
+)
+
+_RE_CANCELAR_LEMBRETE = re.compile(
+    r"\b(cancela(r)?|remove(r)?|apaga(r)?|deleta(r)?|exclui(r)?)\s+(o\s+)?lembrete\b",
+    re.IGNORECASE,
+)
+
+
+def _tentar_criar_lembrete(texto: str) -> str | None:
+    if not _RE_LEMBRETE.search(texto):
+        return None
+
+    tempo = interpretar_tempo(texto)
+    hora  = tempo.get("hora")
+
+    if not hora:
+        return "Entendi que você quer um lembrete, mas não identifiquei o horário. Tente: 'me lembra de ligar às 15h'."
+
+    dia = tempo.get("dia")
+    if dia:
+        try:
+            dt      = datetime.fromisoformat(dia)
+            hora_str = f"{hora} {dt.strftime('%d/%m/%Y')}"
+        except ValueError:
+            hora_str = hora
+    else:
+        hora_str = hora
+
+    prioridade = "Alta" if _RE_PRIORIDADE_LEMBRETE.search(texto) else "Normal"
+    resultado  = criar_lembrete(hora_str, texto.strip(), prioridade)
+
+    if resultado["status"] == "criado":
+        periodo = tempo.get("periodo") or ""
+        aviso   = " (horário estimado)" if tempo.get("ambiguidade") else ""
+        sufixo  = f" da {periodo}" if periodo else ""
+        return f"Lembrete [{prioridade}] criado para {hora}{sufixo}{aviso}."
+
+    if resultado["status"] == "duplicado":
+        return f"Já existe um lembrete para {hora}."
+
+    return "Não consegui criar o lembrete. Tente novamente."
+
+
+def _fluxo_cancelar_lembrete() -> str:
+    ativos = listar_lembretes()
+
+    if not ativos:
+        return "Nenhum lembrete ativo no momento."
+
+    print("\n  Lembretes ativos:")
+    for i, l in enumerate(ativos, start=1):
+        hora = l["hora"][11:16]
+        dia  = l["hora"][:10]
+        print(f"  {i}. [{l['prioridade']}] {hora} ({dia}) — {l['mensagem'][:50]}")
+    print("  0. Cancelar operação\n")
+
+    try:
+        escolha = input("  Qual deseja cancelar? (número): ").strip()
+    except (EOFError, KeyboardInterrupt):
+        return "Operação cancelada."
+
+    if escolha == "0" or not escolha:
+        return "Operação cancelada."
+
+    if not escolha.isdigit() or not (1 <= int(escolha) <= len(ativos)):
+        return "Número inválido. Operação cancelada."
+
+    alvo    = ativos[int(escolha) - 1]
+    horario = alvo["hora"][11:16]
+    dia_str = datetime.fromisoformat(alvo["hora"]).strftime("%d/%m/%Y")
+    resultado = cancelar_lembrete(f"{horario} {dia_str}")
+
+    if resultado["status"] == "cancelado":
+        return f"Lembrete das {horario} cancelado."
+    return "Não foi possível cancelar. Tente novamente."
+
+
+# ---------------------------------------------------------------------------
 # Cancelamento interativo de alarme
 # ---------------------------------------------------------------------------
 
@@ -369,6 +463,30 @@ def main() -> None:
 
         # Verificação passiva a cada ciclo
         _checar_passivo()
+
+        # Cancelamento de lembrete
+        if _RE_CANCELAR_LEMBRETE.search(texto):
+            resposta_cancel = _fluxo_cancelar_lembrete()
+            print(f"  ATLAS: {resposta_cancel}\n")
+            registrar_interacao(
+                texto_usuario=texto,
+                resposta=resposta_cancel,
+                intencao="comando",
+                respondente="atlas",
+            )
+            continue
+
+        # Lembrete via fala natural
+        confirmacao_lembrete = _tentar_criar_lembrete(texto)
+        if confirmacao_lembrete:
+            print(f"  ATLAS: {confirmacao_lembrete}\n")
+            registrar_interacao(
+                texto_usuario=texto,
+                resposta=confirmacao_lembrete,
+                intencao="lembrete",
+                respondente="atlas",
+            )
+            continue
 
         # Cancelamento de alarme
         if _RE_CANCELAR_ALARME.search(texto):

@@ -109,16 +109,25 @@ def listar_lembretes(
     incluir_cancelados: bool = False,
     prioridade: Optional[str] = None,
 ) -> list[dict]:
+    agora     = _agora()
+    hoje      = agora.date()
     lembretes = _carregar()
 
-    if not incluir_cancelados:
-        lembretes = [l for l in lembretes if not l["cancelado"]]
+    resultado = []
+    for l in lembretes:
+        if not incluir_cancelados and l["cancelado"]:
+            continue
+        if l["notificado"]:
+            continue
+        if datetime.fromisoformat(l["hora"]).date() >= hoje:
+            resultado.append(l)
+
     if prioridade:
         _validar_prioridade(prioridade)
-        lembretes = [l for l in lembretes if l["prioridade"] == prioridade]
+        resultado = [l for l in resultado if l["prioridade"] == prioridade]
 
     return sorted(
-        lembretes,
+        resultado,
         key=lambda l: (_ORDEM_PRIORIDADE.get(l["prioridade"], 99), l["hora"]),
     )
 
