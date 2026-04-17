@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from enum import Enum
 from typing import Optional
 
@@ -43,15 +43,25 @@ def _agora() -> datetime:
 
 
 def _parsear(hora: str) -> datetime:
-    """Aceita HH:MM ou HH:MM DD/MM/YYYY."""
-    for fmt in ("%H:%M %d/%m/%Y", "%H:%M"):
-        try:
-            dt = datetime.strptime(hora.strip(), fmt)
-            if fmt == "%H:%M":
-                dt = dt.replace(year=_agora().year, month=_agora().month, day=_agora().day)
-            return dt.replace(second=0, microsecond=0)
-        except ValueError:
-            continue
+    """Aceita HH:MM ou HH:MM DD/MM/YYYY.
+    Se apenas HH:MM for fornecido e o horário já passou hoje, agenda para amanhã."""
+    hora = hora.strip()
+    try:
+        dt = datetime.strptime(hora, "%H:%M %d/%m/%Y")
+        return dt.replace(second=0, microsecond=0)
+    except ValueError:
+        pass
+    try:
+        agora = _agora()
+        dt = datetime.strptime(hora, "%H:%M").replace(
+            year=agora.year, month=agora.month, day=agora.day,
+            second=0, microsecond=0,
+        )
+        if dt <= agora:
+            dt += timedelta(days=1)
+        return dt
+    except ValueError:
+        pass
     raise ValueError(f"Formato inválido: '{hora}'. Use HH:MM ou HH:MM DD/MM/YYYY.")
 
 

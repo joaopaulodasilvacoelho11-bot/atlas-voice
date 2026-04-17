@@ -202,15 +202,17 @@ def _tentar_criar_alarme(texto: str) -> str | None:
     if not hora:
         return "Entendi que você quer um alarme, mas não identifiquei o horário. Tente: 'me acorda às 7h'."
 
-    # Monta string de horário para criar_alarme: HH:MM ou HH:MM DD/MM/YYYY
+    # Monta datetime final, movendo para amanhã se o horário já passou hoje
     dia = tempo.get("dia")
-    if dia:
-        try:
-            dt  = datetime.fromisoformat(dia)
-            horario_str = f"{hora} {dt.strftime('%d/%m/%Y')}"
-        except ValueError:
-            horario_str = hora
-    else:
+    try:
+        h, m   = map(int, hora.split(":"))
+        base   = datetime.fromisoformat(dia) if dia else datetime.now()
+        alvo   = base.replace(hour=h, minute=m, second=0, microsecond=0)
+        if alvo <= datetime.now():
+            from datetime import timedelta
+            alvo += timedelta(days=1)
+        horario_str = f"{hora} {alvo.strftime('%d/%m/%Y')}"
+    except Exception:
         horario_str = hora
 
     mensagem = texto.strip()
@@ -220,7 +222,8 @@ def _tentar_criar_alarme(texto: str) -> str | None:
         periodo = tempo.get("periodo") or ""
         aviso   = " (horário estimado)" if tempo.get("ambiguidade") else ""
         sufixo  = f" da {periodo}" if periodo else ""
-        return f"Alarme criado para {hora}{sufixo}{aviso}."
+        dia_aviso = f" ({alvo.strftime('%d/%m')})" if alvo.date() != datetime.now().date() else ""
+        return f"Alarme criado para {hora}{sufixo}{dia_aviso}{aviso}."
 
     if resultado["status"] == "duplicado":
         return f"Já existe um alarme para {hora}."
@@ -259,23 +262,27 @@ def _tentar_criar_lembrete(texto: str) -> str | None:
         return "Entendi que você quer um lembrete, mas não identifiquei o horário. Tente: 'me lembra de ligar às 15h'."
 
     dia = tempo.get("dia")
-    if dia:
-        try:
-            dt      = datetime.fromisoformat(dia)
-            hora_str = f"{hora} {dt.strftime('%d/%m/%Y')}"
-        except ValueError:
-            hora_str = hora
-    else:
+    try:
+        h, m   = map(int, hora.split(":"))
+        base   = datetime.fromisoformat(dia) if dia else datetime.now()
+        alvo   = base.replace(hour=h, minute=m, second=0, microsecond=0)
+        if alvo <= datetime.now():
+            from datetime import timedelta
+            alvo += timedelta(days=1)
+        hora_str = f"{hora} {alvo.strftime('%d/%m/%Y')}"
+    except Exception:
         hora_str = hora
+        alvo     = datetime.now()
 
     prioridade = "Alta" if _RE_PRIORIDADE_LEMBRETE.search(texto) else "Normal"
     resultado  = criar_lembrete(hora_str, texto.strip(), prioridade)
 
     if resultado["status"] == "criado":
-        periodo = tempo.get("periodo") or ""
-        aviso   = " (horário estimado)" if tempo.get("ambiguidade") else ""
-        sufixo  = f" da {periodo}" if periodo else ""
-        return f"Lembrete [{prioridade}] criado para {hora}{sufixo}{aviso}."
+        periodo   = tempo.get("periodo") or ""
+        aviso     = " (horário estimado)" if tempo.get("ambiguidade") else ""
+        sufixo    = f" da {periodo}" if periodo else ""
+        dia_aviso = f" ({alvo.strftime('%d/%m')})" if alvo.date() != datetime.now().date() else ""
+        return f"Lembrete [{prioridade}] criado para {hora}{sufixo}{dia_aviso}{aviso}."
 
     if resultado["status"] == "duplicado":
         return f"Já existe um lembrete para {hora}."
