@@ -1,6 +1,7 @@
 import json
 import re
 import sys
+import threading
 from datetime import datetime
 from pathlib import Path
 
@@ -415,6 +416,32 @@ def _fluxo_autenticacao() -> tuple[str, dict]:
 
 
 # ---------------------------------------------------------------------------
+# Monitor em segundo plano
+# ---------------------------------------------------------------------------
+
+_encerrar_monitor = threading.Event()
+
+
+def _monitor_loop() -> None:
+    while not _encerrar_monitor.wait(timeout=30):
+        alarmes   = verificar_alarmes()
+        lembretes = verificar_lembretes()
+        linhas = []
+        for a in alarmes:
+            linhas.append(f"\n  [ALARME] {a['mensagem']} ({a['horario'][11:16]})")
+        for l in lembretes:
+            linhas.append(f"\n  [LEMBRETE/{l['prioridade'].upper()}] {l['mensagem']} ({l['hora'][11:16]})")
+        if linhas:
+            print("".join(linhas), flush=True)
+
+
+def _iniciar_monitor() -> threading.Thread:
+    t = threading.Thread(target=_monitor_loop, daemon=True)
+    t.start()
+    return t
+
+
+# ---------------------------------------------------------------------------
 # Loop principal
 # ---------------------------------------------------------------------------
 
@@ -433,6 +460,7 @@ def main() -> None:
     print("  (Digite 'sair' para encerrar, 'configurar' para o menu)\n")
 
     _checar_passivo()
+    _iniciar_monitor()
 
     while True:
         try:
@@ -445,6 +473,7 @@ def main() -> None:
 
         # Encerramento
         if texto.lower() in ("sair", "encerrar"):
+            _encerrar_monitor.set()
             salvar_sessao(inicio=inicio_sessao, fim=datetime.now().isoformat(timespec="seconds"))
             print(f"\n  Sessão encerrada. Até logo, {nome}.")
             sys.exit(0)
