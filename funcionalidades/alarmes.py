@@ -33,8 +33,10 @@ def _parsear(horario: str) -> datetime:
     Se apenas HH:MM for fornecido e o horário já passou hoje, agenda para amanhã."""
     horario = horario.strip()
     try:
-        dt = datetime.strptime(horario, "%H:%M %d/%m/%Y")
-        return dt.replace(second=0, microsecond=0)
+        dt = datetime.strptime(horario, "%H:%M %d/%m/%Y").replace(second=0, microsecond=0)
+        if dt <= _agora():
+            dt += timedelta(days=1)
+        return dt
     except ValueError:
         pass
     try:
