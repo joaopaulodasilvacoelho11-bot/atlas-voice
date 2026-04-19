@@ -1,33 +1,73 @@
-# Atlas Voice V1
-
-Assistente pessoal de voz com dois núcleos: **Atlas** (estratégico, direto) e **Lyra** (emocional, acolhedor). O usuário conversa em linguagem natural e o sistema classifica a intenção, interpreta tempo, gerencia alarmes e lembretes, e persiste memória entre sessões.
+# Atlas Voice V1.1
+> Assistente pessoal de voz — JP Silva, Manaus, Brasil
+> *"Presença contínua, não uma ferramenta."*
 
 ---
 
-## Estrutura do projeto
+## Status do Projeto
+> Última atualização: **19/04/2026 12:54** | Branch: `master`
 
-```
-atlas-voice-v1/
-├── main.py                          # Entrada única do sistema
-├── config.py                        # Caminhos e configurações
-├── requirements.txt
-├── core/                            # Reservado para extensões futuras
-├── nucleos/
-│   ├── atlas_nucleo.py              # Núcleo estratégico
-│   └── lyra_nucleo.py               # Núcleo emocional
-├── pipeline/
-│   ├── base_2_4_motor_temporal_oficial.py       # Interpretação de tempo natural
-│   └── base_2_5_classificador_intencao_oficial.py  # Classificação de intenção
-├── funcionalidades/
-│   ├── alarmes.py                   # Gerenciamento de alarmes
-│   ├── lembretes.py                 # Gerenciamento de lembretes
-│   └── memoria_persistente.py       # Histórico e sessões
-└── data/                            # Gerado automaticamente (ignorado pelo git)
-    ├── alarmes.json
-    ├── lembretes.json
-    ├── memoria.json
-    └── usuarios.json
-```
+---
+
+## Funcionalidades
+
+| Status | Funcionalidade |
+|--------|----------------|
+| ✅ | Login seguro (bcrypt) |
+| ✅ | Perfil por usuário |
+| ✅ | Atlas respondendo |
+| ✅ | Lyra respondendo |
+| ✅ | Troca Atlas/Lyra por comando |
+| ✅ | Alarmes — criar por voz |
+| ✅ | Alarmes — cancelar com lista |
+| ✅ | Alarmes — horário passado vai para amanhã |
+| ✅ | Monitor de alarmes em segundo plano |
+| ✅ | Lembretes com prioridade |
+| ✅ | Memória entre sessões |
+| ✅ | Histórico de interações |
+| ✅ | Menu de configurações |
+| ✅ | Cronômetro (iniciar, parar, tempo, zerar) |
+
+---
+
+## Próximos Passos
+
+- 🔲 Timer com contagem regressiva
+- 🔲 Notas rápidas por voz
+- 🔲 Lista de tarefas (to-do)
+- 🔲 Integração com IA externa (V2)
+- 🔲 Interface web (V2)
+- 🔲 Voz real com ElevenLabs (V3)
+
+---
+
+## Últimos Commits
+
+- `1ded380 2026-04-19 feat: adiciona cronômetro (iniciar, parar, tempo, zerar)`
+- `b0ccf0d 2026-04-18 feat: monitor de alarmes em segundo plano`
+- `0714cf3 2026-04-18 fix: alarme passado avanca para amanha em ambos os formatos`
+- `8cf77e3 2026-04-17 fix: respostas naturais Atlas e Lyra, bug alarme passado`
+- `83b9165 2026-04-17 feat: lembretes por voz, cancelamento e README`
+
+---
+
+## Comandos Disponíveis
+
+| Comando | Ação |
+|---------|------|
+| `me acorda às 8h` | Cria alarme |
+| `cancelar alarme` | Lista e cancela alarme |
+| `me lembra de X às 15h` | Cria lembrete Normal |
+| `me lembra de X às 15h urgente` | Cria lembrete Alta prioridade |
+| `cancelar lembrete` | Lista e cancela lembrete |
+| `iniciar cronômetro` | Inicia cronômetro |
+| `parar cronômetro` | Para cronômetro |
+| `quanto tempo passou` | Consulta tempo decorrido |
+| `zerar cronômetro` | Zera cronômetro |
+| `falar com Lyra` | Ativa núcleo emocional |
+| `mudar para Atlas` | Ativa núcleo estratégico |
+| `configurar` | Menu de configurações |
+| `sair` / `encerrar` | Encerra sessão |
 
 ---
 
@@ -38,46 +78,5 @@ atlas-voice-v1/
 
 ---
 
-## Instalação
-
-```bash
-cd atlas-voice-v1
-pip install -r requirements.txt
-```
-
----
-
-## Como rodar
-
-```bash
-py main.py
-```
-
-No primeiro acesso, escolha a opção **2 (Criar conta)** e defina usuário e senha.
-
----
-
-## Comandos disponíveis em sessão
-
-| Comando | Ação |
-|---|---|
-| `me acorda às 8h` | Cria alarme |
-| `cancelar alarme` | Lista alarmes ativos e cancela o escolhido |
-| `me lembra de X às 15h` | Cria lembrete com prioridade Normal |
-| `me lembra de X às 15h urgente` | Cria lembrete com prioridade Alta |
-| `cancelar lembrete` | Lista lembretes ativos e cancela o escolhido |
-| `falar com Lyra` | Muda para o núcleo emocional |
-| `mudar para Atlas` | Muda para o núcleo estratégico |
-| `configurar` | Abre menu de configurações |
-| `sair` / `encerrar` | Encerra e salva a sessão |
-
----
-
-## Configurações por variável de ambiente
-
-| Variável | Padrão | Descrição |
-|---|---|---|
-| `ATLAS_PROJECT_NAME` | `atlas-voice-v1` | Nome do projeto |
-| `ATLAS_LOG_LEVEL` | `INFO` | Nível de log |
-| `ATLAS_SAMPLE_RATE` | `16000` | Taxa de amostragem de áudio |
-| `ATLAS_LANGUAGE` | `pt-BR` | Idioma |
+*Atlas Voice — JP Silva — Manaus, Brasil*
+*Documento gerado automaticamente por atualizar_status.py*
