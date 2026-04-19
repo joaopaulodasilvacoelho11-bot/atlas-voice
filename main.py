@@ -25,6 +25,12 @@ from funcionalidades.lembretes import (
     cancelar_lembrete,
     listar_lembretes,
 )
+from funcionalidades.cronometro import (
+    iniciar_cronometro,
+    parar_cronometro,
+    tempo_passado,
+    zerar_cronometro,
+)
 
 _ARQUIVO_USUARIOS = DIRS["data"] / "usuarios.json"
 
@@ -193,7 +199,6 @@ _RE_ALARME = re.compile(
 
 
 def _tentar_criar_alarme(texto: str) -> str | None:
-    """Retorna mensagem de confirmação se detectou e criou alarme, None caso contrário."""
     if not _RE_ALARME.search(texto):
         return None
 
@@ -203,7 +208,6 @@ def _tentar_criar_alarme(texto: str) -> str | None:
     if not hora:
         return "Entendi que você quer um alarme, mas não identifiquei o horário. Tente: 'me acorda às 7h'."
 
-    # Monta datetime final, movendo para amanhã se o horário já passou hoje
     dia = tempo.get("dia")
     try:
         h, m   = map(int, hora.split(":"))
@@ -370,6 +374,28 @@ def _fluxo_cancelar_alarme() -> str:
 
 
 # ---------------------------------------------------------------------------
+# Detecção de cronômetro
+# ---------------------------------------------------------------------------
+
+_RE_CRONOMETRO_INICIAR = re.compile(
+    r"\b(iniciar|inicia|começa|comeca|start|liga)\s+cron[oô]metro\b",
+    re.IGNORECASE,
+)
+_RE_CRONOMETRO_PARAR = re.compile(
+    r"\b(parar|para|stop|pausa)\s+cron[oô]metro\b",
+    re.IGNORECASE,
+)
+_RE_CRONOMETRO_TEMPO = re.compile(
+    r"\b(quanto tempo passou|tempo decorrido|ver cron[oô]metro)\b",
+    re.IGNORECASE,
+)
+_RE_CRONOMETRO_ZERAR = re.compile(
+    r"\b(zerar|zera|resetar|reset)\s+cron[oô]metro\b",
+    re.IGNORECASE,
+)
+
+
+# ---------------------------------------------------------------------------
 # Processamento de input
 # ---------------------------------------------------------------------------
 
@@ -504,51 +530,56 @@ def main() -> None:
         if _RE_CANCELAR_LEMBRETE.search(texto):
             resposta_cancel = _fluxo_cancelar_lembrete()
             print(f"  ATLAS: {resposta_cancel}\n")
-            registrar_interacao(
-                texto_usuario=texto,
-                resposta=resposta_cancel,
-                intencao="comando",
-                respondente="atlas",
-            )
+            registrar_interacao(texto_usuario=texto, resposta=resposta_cancel, intencao="comando", respondente="atlas")
             continue
 
         # Lembrete via fala natural
         confirmacao_lembrete = _tentar_criar_lembrete(texto)
         if confirmacao_lembrete:
             print(f"  ATLAS: {confirmacao_lembrete}\n")
-            registrar_interacao(
-                texto_usuario=texto,
-                resposta=confirmacao_lembrete,
-                intencao="lembrete",
-                respondente="atlas",
-            )
+            registrar_interacao(texto_usuario=texto, resposta=confirmacao_lembrete, intencao="lembrete", respondente="atlas")
             continue
 
         # Cancelamento de alarme
         if _RE_CANCELAR_ALARME.search(texto):
             resposta_cancel = _fluxo_cancelar_alarme()
             print(f"  ATLAS: {resposta_cancel}\n")
-            registrar_interacao(
-                texto_usuario=texto,
-                resposta=resposta_cancel,
-                intencao="comando",
-                respondente="atlas",
-            )
+            registrar_interacao(texto_usuario=texto, resposta=resposta_cancel, intencao="comando", respondente="atlas")
             continue
 
         # Alarme via fala natural
         confirmacao_alarme = _tentar_criar_alarme(texto)
         if confirmacao_alarme:
             print(f"  ATLAS: {confirmacao_alarme}\n")
-            registrar_interacao(
-                texto_usuario=texto,
-                resposta=confirmacao_alarme,
-                intencao="comando",
-                respondente="atlas",
-            )
+            registrar_interacao(texto_usuario=texto, resposta=confirmacao_alarme, intencao="comando", respondente="atlas")
             continue
 
-        # Processamento
+        # Cronômetro
+        if _RE_CRONOMETRO_INICIAR.search(texto):
+            resposta_cron = iniciar_cronometro()
+            print(f"  ATLAS: {resposta_cron}\n")
+            registrar_interacao(texto_usuario=texto, resposta=resposta_cron, intencao="comando", respondente="atlas")
+            continue
+
+        if _RE_CRONOMETRO_PARAR.search(texto):
+            resposta_cron = parar_cronometro()
+            print(f"  ATLAS: {resposta_cron}\n")
+            registrar_interacao(texto_usuario=texto, resposta=resposta_cron, intencao="comando", respondente="atlas")
+            continue
+
+        if _RE_CRONOMETRO_TEMPO.search(texto):
+            resposta_cron = tempo_passado()
+            print(f"  ATLAS: {resposta_cron}\n")
+            registrar_interacao(texto_usuario=texto, resposta=resposta_cron, intencao="comando", respondente="atlas")
+            continue
+
+        if _RE_CRONOMETRO_ZERAR.search(texto):
+            resposta_cron = zerar_cronometro()
+            print(f"  ATLAS: {resposta_cron}\n")
+            registrar_interacao(texto_usuario=texto, resposta=resposta_cron, intencao="comando", respondente="atlas")
+            continue
+
+        # Processamento geral
         resposta_texto, intencao, resp_usado = _processar(texto, respondente)
         print(f"  {resp_usado.upper()}: {resposta_texto}\n")
 
