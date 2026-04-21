@@ -38,6 +38,12 @@ from funcionalidades.erros import (
     executar_com_protecao,
     relatorio_saude,
 )
+from funcionalidades.contexto_sessao import (
+    adicionar_mensagem,
+    obter_contexto_formatado,
+    limpar_contexto,
+    contexto_tem_mencao,
+)
 _ARQUIVO_USUARIOS = DIRS["data"] / "usuarios.json"
 
 _atlas = AtlasNucleo()
@@ -513,6 +519,7 @@ def main() -> None:
         if texto.lower() in ("sair", "encerrar"):
             _encerrar_monitor.set()
             salvar_sessao(inicio=inicio_sessao, fim=datetime.now().isoformat(timespec="seconds"))
+            limpar_contexto()
             print(f"\n  Sessão encerrada. Até logo, {nome}.")
             sys.exit(0)
 
@@ -592,7 +599,9 @@ def main() -> None:
             continue
 
         # Processamento geral
+        adicionar_mensagem("usuario", texto)
         resposta_texto, intencao, resp_usado = _processar(texto, respondente)
+        adicionar_mensagem(resp_usado, resposta_texto)
         print(f"  {resp_usado.upper()}: {resposta_texto}\n")
 
         registrar_interacao(
