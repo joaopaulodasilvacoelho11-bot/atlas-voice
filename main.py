@@ -31,6 +31,11 @@ from funcionalidades.cronometro import (
     tempo_passado,
     zerar_cronometro,
 )
+from funcionalidades.timer import (
+    iniciar_timer,
+    cancelar_timer,
+    tempo_restante_timer,
+)
 from funcionalidades.erros import (
     log_erro,
     log_info,
@@ -408,6 +413,59 @@ _RE_CRONOMETRO_ZERAR = re.compile(
 
 
 # ---------------------------------------------------------------------------
+# Detecção de timer
+# ---------------------------------------------------------------------------
+
+_RE_TIMER_INICIAR = re.compile(
+    r"\b(coloca|cria|inicia|iniciar|set|bota|põe)\s+(?:um\s+)?timer\b"
+    r"|\btimer\s+de\b"
+    r"|\bavisa\s+(daqui\s+a|em)\b"
+    r"|\bme\s+avisa\s+(daqui\s+a|em)\b",
+    re.IGNORECASE,
+)
+_RE_TIMER_CANCELAR = re.compile(
+    r"\b(cancela(r)?|para(r)?|stop)\s+(o\s+)?timer\b",
+    re.IGNORECASE,
+)
+_RE_TIMER_RESTANTE = re.compile(
+    r"\b(quanto\s+tempo\s+(falta|resta)|ver\s+timer|tempo\s+do\s+timer)\b",
+    re.IGNORECASE,
+)
+
+_RE_TEMPO_TIMER = re.compile(
+    r"(\d+)\s*(hora[s]?|h|minuto[s]?|min|segundo[s]?|seg|s)\b",
+    re.IGNORECASE,
+)
+
+
+def _extrair_segundos(texto: str) -> int | None:
+    total = 0
+    encontrou = False
+    for m in _RE_TEMPO_TIMER.finditer(texto):
+        valor = int(m.group(1))
+        unidade = m.group(2).lower()
+        if unidade in ("hora", "horas", "h"):
+            total += valor * 3600
+        elif unidade in ("minuto", "minutos", "min"):
+            total += valor * 60
+        elif unidade in ("segundo", "segundos", "seg", "s"):
+            total += valor
+        encontrou = True
+    return total if encontrou else None
+
+
+def _tentar_iniciar_timer(texto: str) -> str | None:
+    if not _RE_TIMER_INICIAR.search(texto):
+        return None
+
+    segundos = _extrair_segundos(texto)
+    if not segundos:
+        return "Entendi que você quer um timer, mas não identifiquei o tempo. Tente: 'timer de 10 minutos'."
+
+    return iniciar_timer(segundos)
+
+
+# ---------------------------------------------------------------------------
 # Processamento de input
 # ---------------------------------------------------------------------------
 
@@ -596,6 +654,25 @@ def main() -> None:
             resposta_cron = zerar_cronometro()
             print(f"  ATLAS: {resposta_cron}\n")
             registrar_interacao(texto_usuario=texto, resposta=resposta_cron, intencao="comando", respondente="atlas")
+            continue
+
+        # Timer
+        if _RE_TIMER_CANCELAR.search(texto):
+            resposta_timer = cancelar_timer()
+            print(f"  ATLAS: {resposta_timer}\n")
+            registrar_interacao(texto_usuario=texto, resposta=resposta_timer, intencao="comando", respondente="atlas")
+            continue
+
+        if _RE_TIMER_RESTANTE.search(texto):
+            resposta_timer = tempo_restante_timer()
+            print(f"  ATLAS: {resposta_timer}\n")
+            registrar_interacao(texto_usuario=texto, resposta=resposta_timer, intencao="comando", respondente="atlas")
+            continue
+
+        resposta_timer = _tentar_iniciar_timer(texto)
+        if resposta_timer:
+            print(f"  ATLAS: {resposta_timer}\n")
+            registrar_interacao(texto_usuario=texto, resposta=resposta_timer, intencao="comando", respondente="atlas")
             continue
 
         # Processamento geral
