@@ -31,7 +31,13 @@ from funcionalidades.cronometro import (
     tempo_passado,
     zerar_cronometro,
 )
-
+from funcionalidades.erros import (
+    log_erro,
+    log_info,
+    log_aviso,
+    executar_com_protecao,
+    relatorio_saude,
+)
 _ARQUIVO_USUARIOS = DIRS["data"] / "usuarios.json"
 
 _atlas = AtlasNucleo()
@@ -450,15 +456,18 @@ _encerrar_monitor = threading.Event()
 
 def _monitor_loop() -> None:
     while not _encerrar_monitor.wait(timeout=30):
-        alarmes   = verificar_alarmes()
-        lembretes = verificar_lembretes()
-        linhas = []
-        for a in alarmes:
-            linhas.append(f"\n  [ALARME] {a['mensagem']} ({a['horario'][11:16]})")
-        for l in lembretes:
-            linhas.append(f"\n  [LEMBRETE/{l['prioridade'].upper()}] {l['mensagem']} ({l['hora'][11:16]})")
-        if linhas:
-            print("".join(linhas), flush=True)
+        try:
+            alarmes   = verificar_alarmes()
+            lembretes = verificar_lembretes()
+            linhas = []
+            for a in alarmes:
+                linhas.append(f"\n  [ALARME] {a['mensagem']} ({a['horario'][11:16]})")
+            for l in lembretes:
+                linhas.append(f"\n  [LEMBRETE/{l['prioridade'].upper()}] {l['mensagem']} ({l['hora'][11:16]})")
+            if linhas:
+                print("".join(linhas), flush=True)
+        except Exception as e:
+            log_erro("monitor_background", e)
 
 
 def _iniciar_monitor() -> threading.Thread:
@@ -496,7 +505,10 @@ def main() -> None:
 
         if not texto:
             continue
-
+        # Diagnóstico do sistema
+        if texto.lower() in ("saude", "saúde", "status do sistema"):
+            print(f"\n{relatorio_saude()}\n")
+            continue
         # Encerramento
         if texto.lower() in ("sair", "encerrar"):
             _encerrar_monitor.set()
