@@ -36,6 +36,12 @@ from funcionalidades.timer import (
     cancelar_timer,
     tempo_restante_timer,
 )
+from funcionalidades.notas import (
+    criar_nota,
+    listar_notas,
+    apagar_nota,
+    apagar_todas_notas,
+)
 from funcionalidades.erros import (
     log_erro,
     log_info,
@@ -466,6 +472,62 @@ def _tentar_iniciar_timer(texto: str) -> str | None:
 
 
 # ---------------------------------------------------------------------------
+# Detecção de notas
+# ---------------------------------------------------------------------------
+
+_RE_NOTA_CRIAR = re.compile(
+    r"\b(anota\s+(a[ií]|isso)|anota(r)?|salva\s+nota|cria\s+nota|criar\s+nota|nota\s+r[aá]pida)\b"
+    r"|\b(anota\s+a[ií])\b",
+    re.IGNORECASE,
+)
+_RE_NOTA_LISTAR = re.compile(
+    r"\b(minhas\s+notas|ver\s+notas|lista(r)?\s+notas|quais\s+(s[aã]o\s+)?minhas\s+notas|mostra\s+notas)\b",
+    re.IGNORECASE,
+)
+_RE_NOTA_APAGAR = re.compile(
+    r"\b(apaga(r)?|deleta(r)?|remove(r)?|exclui(r)?)\s+(a\s+)?nota\b",
+    re.IGNORECASE,
+)
+_RE_NOTA_APAGAR_TODAS = re.compile(
+    r"\b(apaga(r)?|deleta(r)?|limpa(r)?)\s+(todas\s+as\s+)?notas\b",
+    re.IGNORECASE,
+)
+
+_RE_EXTRAIR_CONTEUDO_NOTA = re.compile(
+    r"\b(anota\s+a[ií]|anota\s+isso|anota(r)?|salva\s+nota|cria\s+nota|criar\s+nota|nota\s+r[aá]pida)\s*[:\-]?\s*",
+    re.IGNORECASE,
+)
+
+
+def _extrair_conteudo_nota(texto: str) -> str:
+    conteudo = _RE_EXTRAIR_CONTEUDO_NOTA.sub("", texto).strip()
+    conteudo = re.sub(r"^[:\-]\s*", "", conteudo).strip()
+    return conteudo
+
+
+def _fluxo_apagar_nota() -> str:
+    notas = listar_notas()
+    if notas == "Nenhuma nota salva.":
+        return notas
+
+    print(f"\n{notas}")
+    print("  0. Cancelar\n")
+
+    try:
+        escolha = input("  Qual nota apagar? (número): ").strip()
+    except (EOFError, KeyboardInterrupt):
+        return "Operação cancelada."
+
+    if escolha == "0" or not escolha:
+        return "Operação cancelada."
+
+    if not escolha.isdigit():
+        return "Número inválido."
+
+    return apagar_nota(int(escolha))
+
+
+# ---------------------------------------------------------------------------
 # Processamento de input
 # ---------------------------------------------------------------------------
 
@@ -569,10 +631,12 @@ def main() -> None:
 
         if not texto:
             continue
+
         # Diagnóstico do sistema
         if texto.lower() in ("saude", "saúde", "status do sistema"):
             print(f"\n{relatorio_saude()}\n")
             continue
+
         # Encerramento
         if texto.lower() in ("sair", "encerrar"):
             _encerrar_monitor.set()
@@ -673,6 +737,35 @@ def main() -> None:
         if resposta_timer:
             print(f"  ATLAS: {resposta_timer}\n")
             registrar_interacao(texto_usuario=texto, resposta=resposta_timer, intencao="comando", respondente="atlas")
+            continue
+
+        # Notas
+        if _RE_NOTA_APAGAR_TODAS.search(texto):
+            resposta_nota = apagar_todas_notas()
+            print(f"  ATLAS: {resposta_nota}\n")
+            registrar_interacao(texto_usuario=texto, resposta=resposta_nota, intencao="comando", respondente="atlas")
+            continue
+
+        if _RE_NOTA_APAGAR.search(texto):
+            resposta_nota = _fluxo_apagar_nota()
+            print(f"  ATLAS: {resposta_nota}\n")
+            registrar_interacao(texto_usuario=texto, resposta=resposta_nota, intencao="comando", respondente="atlas")
+            continue
+
+        if _RE_NOTA_LISTAR.search(texto):
+            resposta_nota = listar_notas()
+            print(f"\n  ATLAS: {resposta_nota}\n")
+            registrar_interacao(texto_usuario=texto, resposta=resposta_nota, intencao="comando", respondente="atlas")
+            continue
+
+        if _RE_NOTA_CRIAR.search(texto):
+            conteudo = _extrair_conteudo_nota(texto)
+            if conteudo:
+                resposta_nota = criar_nota(conteudo)
+            else:
+                resposta_nota = "O que devo anotar? Tente: 'anota aí: comprar pão'."
+            print(f"  ATLAS: {resposta_nota}\n")
+            registrar_interacao(texto_usuario=texto, resposta=resposta_nota, intencao="comando", respondente="atlas")
             continue
 
         # Processamento geral
