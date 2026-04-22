@@ -1,8 +1,17 @@
 import re
 import random
+import os
 from dataclasses import dataclass
 from enum import Enum
 from typing import Optional
+
+try:
+    import anthropic
+    from dotenv import load_dotenv
+    load_dotenv()
+    _IA_DISPONIVEL = True
+except ImportError:
+    _IA_DISPONIVEL = False
 
 
 class Intencao(Enum):
@@ -76,6 +85,34 @@ def _checar_direto(texto: str) -> Optional[str]:
     return None
 
 
+def _chamar_ia(texto: str, system_prompt: str) -> Optional[str]:
+    """Chama a Claude API. Retorna None se falhar."""
+    if not _IA_DISPONIVEL:
+        return None
+    try:
+        api_key = os.getenv("ANTHROPIC_API_KEY")
+        if not api_key:
+            return None
+        client = anthropic.Anthropic(api_key=api_key)
+        mensagem = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=512,
+            system=system_prompt,
+            messages=[{"role": "user", "content": texto}]
+        )
+        return mensagem.content[0].text.strip()
+    except Exception:
+        return None
+
+
+_SYSTEM_ATLAS = (
+    "Você é Atlas, o núcleo estratégico do assistente de voz pessoal Atlas Voice. "
+    "Seu dono é JP Silva, de Manaus, Brasil. "
+    "Seja direto, objetivo e estratégico. Sem rodeios. Respostas curtas e precisas. "
+    "Não se identifique como Claude. Você é Atlas."
+)
+
+
 class AtlasNucleo:
 
     def processar(self, entrada: Entrada) -> Resposta:
@@ -115,12 +152,17 @@ class AtlasNucleo:
         return Resposta(texto=random.choice(opcoes), intencao=entrada.intencao)
 
     def _pergunta(self, entrada: Entrada) -> Resposta:
+        # ← IA entra aqui
+        resposta_ia = _chamar_ia(entrada.texto, _SYSTEM_ATLAS)
+        if resposta_ia:
+            return Resposta(texto=resposta_ia, intencao=entrada.intencao)
+        # fallback se a IA falhar
         opcoes = [
-            f"Pergunta recebida: '{entrada.texto}'. Processando resposta.",
-            f"Entendido. Analisando: '{entrada.texto}'.",
-            f"Processando '{entrada.texto}'. Aguarde.",
+            "Não consegui processar agora. Tente novamente.",
+            "Sem conexão com IA. Tente em instantes.",
+            "Falha temporária. Reformule ou tente mais tarde.",
         ]
-        return Resposta(texto=random.choice(opcoes), intencao=entrada.intencao)
+        return Resposta(texto=random.choice(opcoes), intencao=entrada.intencao, erro="ia_indisponivel")
 
     def _comando(self, entrada: Entrada) -> Resposta:
         params = entrada.parametros or {}
@@ -135,12 +177,17 @@ class AtlasNucleo:
         return Resposta(texto=random.choice(opcoes), intencao=entrada.intencao)
 
     def _conversa(self, entrada: Entrada) -> Resposta:
+        # ← IA entra aqui também
+        resposta_ia = _chamar_ia(entrada.texto, _SYSTEM_ATLAS)
+        if resposta_ia:
+            return Resposta(texto=resposta_ia, intencao=entrada.intencao)
+        # fallback
         opcoes = [
             f"Entendido: '{entrada.texto}'. Posso ajudar com algo concreto?",
             f"Recebi. Tem algum comando ou tarefa relacionada?",
             f"Certo. Quer transformar isso em uma ação?",
         ]
-        return Resposta(texto=random.choice(opcoes), intencao=entrada.intencao)
+        return Resposta(texto=random.choice(opcoes), intencao=entrada.intencao, erro="ia_indisponivel")
 
     def _desconhecida(self, entrada: Entrada) -> Resposta:
         opcoes = [
