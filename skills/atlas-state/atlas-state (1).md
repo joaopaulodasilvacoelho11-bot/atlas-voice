@@ -25,46 +25,37 @@ Ao iniciar uma sessão com o JP, NÃO perguntar onde parou. Leia este documento,
 
 ---
 
-## Última Sessão — 22/04/2026
+## Última Sessão — 23/04/2026
 
 ### O que foi feito
-1. **Integração Claude API** — `nucleos/atlas_nucleo.py` e `nucleos/lyra_nucleo.py` — função `_chamar_ia()` criada, chama modelo Haiku, fallback garantido se falhar
-2. **IA em `_desconhecida()`** — Atlas e Lyra agora tentam IA mesmo em intenções não reconhecidas
-3. **Classificador expandido** — `pipeline/base_2_5_classificador_intencao_oficial.py` — novos padrões de `PERGUNTA` adicionados
-4. **`.env` criado localmente** — chave `ANTHROPIC_API_KEY` protegida fora do Git
-5. **`.gitignore` atualizado** — `.env` nunca vai pro GitHub
-6. **Chave comprometida deletada** — nova chave criada e configurada
-7. **Commit limpo no GitHub** — V2 completa no repositório
+1. **Voz de entrada — Whisper** — `voz/entrada.py` criado — grava 5s do microfone, detecta energia, transcreve com modelo `base`
+2. **Voz de saída — ElevenLabs** — `voz/saida.py` criado — sintetiza resposta com `eleven_multilingual_v2`, reproduz com pygame
+3. **Filtro de energia** — silêncio ignorado antes de chamar o Whisper — evita transcrições fantasmas
+4. **Normalização de comandos** — variações de "sair" por voz reconhecidas corretamente
+5. **Integração no main.py** — `ouvir()` substituiu `input()`, `falar()` adicionado após cada resposta
+6. **ElevenLabs configurado** — plano Iniciante ($6/mês) contratado, chave e voice ID no `.env`
+7. **Commit V3 no GitHub** — `64ee7fc`
 
 ### Estado atual do código
 ```
-nucleos/
-├── atlas_nucleo.py   ← ATUALIZADO — _chamar_ia() + _SYSTEM_ATLAS + IA em _pergunta, _conversa, _desconhecida
-└── lyra_nucleo.py    ← ATUALIZADO — _chamar_ia() importada + _SYSTEM_LYRA + IA em _pergunta, _conversa, _desconhecida
-
-pipeline/
-└── base_2_5_classificador_intencao_oficial.py  ← ATUALIZADO — novos padrões de PERGUNTA
-
-.env                  ← local only — NUNCA no GitHub
-.gitignore            ← .env protegido
+voz/
+├── entrada.py   ← NOVO — Whisper base + filtro de energia + ffmpeg via imageio
+└── saida.py     ← NOVO — ElevenLabs eleven_multilingual_v2 + pygame
+main.py          ← ATUALIZADO — ouvir() + falar() integrados no loop principal
+.env             ← local only — ANTHROPIC_API_KEY + ELEVENLABS_API_KEY + ELEVENLABS_VOICE_ID
 ```
 
 ---
 
-## Próximo Passo — O que fazer agora
+## Próximo Passo
 
-**V3 — Voz Real**
+**Melhorias de V3 — qualidade de voz**
 
-- **Entrada:** Whisper (OpenAI) — captura áudio do microfone e converte em texto
-- **Saída:** ElevenLabs — converte resposta em áudio e reproduz no speaker
-- Ponto de entrada: `main.py` — adicionar loop de voz antes do loop de texto
-- Estratégia: cirúrgica — voz como camada sobre o sistema existente, texto como fallback
+1. **Detecção de voz ativa (VAD)** — gravar só quando houver fala, não tempo fixo de 5s
+2. **Login por voz** — eliminar input de teclado no início
+3. **Feedback sonoro** — Atlas emite som curto quando começa a ouvir
 
-**Ordem de execução:**
-1. Instalar dependências: `openai-whisper`, `sounddevice`, `elevenlabs`
-2. Criar `voz/entrada.py` — captura e transcreve áudio
-3. Criar `voz/saida.py` — sintetiza e reproduz resposta
-4. Integrar no `main.py` — loop de voz ativo por padrão
+**Depois:** V4 — Android
 
 ---
 
@@ -87,8 +78,11 @@ pipeline/
 | Respostas variadas | ✅ |
 | Timer regressivo | ✅ |
 | Notas rápidas | ✅ |
-| Integração IA (V2) | ✅ Completa |
-| Voz real — Whisper + ElevenLabs (V3) | 🔜 Próximo |
+| Integração IA (V2) | ✅ |
+| Voz real — Whisper + ElevenLabs (V3) | ✅ Completa |
+| VAD — detecção de voz ativa | 🔜 Próximo |
+| Login por voz | 🔜 Próximo |
+| Android (V4) | Futuro |
 
 ---
 
@@ -96,9 +90,9 @@ pipeline/
 
 | Fase | Foco | Status |
 |---|---|---|
-| V1 | Fundação — CLI funcional | ✅ Completa |
-| V2 | Inteligência — IA externa (Claude API) | ✅ Completa |
-| V3 | Voz real — Whisper + ElevenLabs | 🔜 Próximo |
+| V1 | Fundação — CLI funcional | ✅ |
+| V2 | Inteligência — IA externa (Claude API) | ✅ |
+| V3 | Voz real — Whisper + ElevenLabs | ✅ |
 | V4 | Mobile — Android + voz nativa | Futuro |
 | V5 | Ecossistema — IoT, saúde, emergência | Futuro |
 | V6 | Escala nacional | Futuro |
@@ -107,57 +101,26 @@ pipeline/
 
 ## Regras do Projeto
 
-```
-1. Nenhuma versão nasce do zero
-2. Toda base herda 100% das anteriores
-3. Nunca avançar sem fechar a fase atual
-4. Backup antes de qualquer mudança grande
-5. Um módulo por vez — foco e destreza
-6. Claude Code para edição de código — mais rápido
-7. Testar no Anaconda Prompt após cada mudança
-8. NUNCA commitar .env — chave sempre local
-```
+- Nenhuma versão nasce do zero
+- Toda base herda 100% das anteriores
+- Nunca avançar sem fechar a fase atual
+- Backup antes de qualquer mudança grande
+- Um módulo por vez — foco e destreza
+- Claude Code para edição de código
+- Testar no Anaconda Prompt após cada mudança
+- NUNCA commitar .env — chave sempre local
 
 ---
 
 ## Como Rodar o Sistema
 
 ```bash
-# Abrir Anaconda Prompt
 conda activate atlasvoice
 cd C:\Users\Gleida\Desktop\atlas-voice-v1
 python main.py
-
-# Comandos especiais dentro do sistema:
-saúde          → diagnóstico do sistema
-configurar     → menu de configurações
-falar com Lyra → ativa núcleo emocional
-mudar para Atlas → ativa núcleo estratégico
-sair           → encerra sessão
 ```
 
 ---
 
-## Núcleos
-
-- **ATLAS** — estratégico, direto, objetivo. System prompt: "Seja direto, objetivo e estratégico. Sem rodeios. Respostas curtas e precisas."
-- **LYRA** — emocional, calmo, acolhedor. System prompt: "Seja acolhedora, empática e presente. Respostas humanas e calorosas, mas sem exagero."
-
----
-
-## Segurança
-
-- API Key da Anthropic: salva em `.env` local — nunca no GitHub
-- `.gitignore` protege o `.env`
-- Chave nomeada `atlas-voice` no console da Anthropic
-
----
-
-## Protocolo de Atualização desta Skill
-
-Ao final de cada sessão produtiva, JP cola o resumo do que foi feito e o Claude atualiza esta skill antes de encerrar. Isso garante continuidade perfeita na próxima sessão.
-
----
-
 *Atlas Voice — JP Silva — Manaus, Brasil*  
-*Atualizado: 22/04/2026*
+*Atualizado: 23/04/2026*
