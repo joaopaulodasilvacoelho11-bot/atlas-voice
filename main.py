@@ -55,6 +55,8 @@ from funcionalidades.contexto_sessao import (
     limpar_contexto,
     contexto_tem_mencao,
 )
+from voz.entrada import ouvir
+from voz.saida import falar
 _ARQUIVO_USUARIOS = DIRS["data"] / "usuarios.json"
 
 _atlas = AtlasNucleo()
@@ -625,9 +627,16 @@ def main() -> None:
 
     while True:
         try:
-            texto = input(f"[{respondente.upper()}] Você: ").strip()
+            texto = ouvir()
         except (EOFError, KeyboardInterrupt):
             texto = "sair"
+
+        # Normaliza comando de saída por voz
+        if texto.lower() in ("sai", "saii", "saí", "saií", "exit", "sair!"):
+            texto = "sair"
+
+        if texto == "__silencio__":
+            continue
 
         if not texto:
             continue
@@ -773,6 +782,7 @@ def main() -> None:
         resposta_texto, intencao, resp_usado = _processar(texto, respondente)
         adicionar_mensagem(resp_usado, resposta_texto)
         print(f"  {resp_usado.upper()}: {resposta_texto}\n")
+        falar(resposta_texto)
 
         registrar_interacao(
             texto_usuario=texto,
