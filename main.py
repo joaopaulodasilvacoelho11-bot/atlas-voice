@@ -57,6 +57,20 @@ from funcionalidades.contexto_sessao import (
 )
 from voz.entrada import ouvir
 from voz.saida import falar
+
+# ---------------------------------------------------------------------------
+# Modo de entrada
+# ---------------------------------------------------------------------------
+
+_MODO_ENTRADA = "texto"  # padrão: texto. Ativar voz por comando.
+
+def _capturar(prompt: str = "") -> str:
+    if _MODO_ENTRADA == "voz":
+        return ouvir()
+    if prompt:
+        print(f"  {prompt}", end="")
+    return input().strip()
+
 _ARQUIVO_USUARIOS = DIRS["data"] / "usuarios.json"
 
 _atlas = AtlasNucleo()
@@ -182,7 +196,7 @@ def _menu_configuracao(nome: str, respondente_atual: str) -> str:
     print("  2. Alterar respondente padrão")
     print("  3. Ver histórico recente (5 últimas)")
     print("  4. Voltar")
-    opcao = input("  Opção: ").strip().lower()
+    opcao = _capturar("Opção: ").lower()
 
     _opcao2 = {"2", "alterar", "alterar respondente", "respondente"}
     _opcao3 = {"3", "historico", "histórico", "ver histórico", "ver historico"}
@@ -334,7 +348,7 @@ def _fluxo_cancelar_lembrete() -> str:
     print("  0. Cancelar operação\n")
 
     try:
-        escolha = input("  Qual deseja cancelar? (número): ").strip()
+        escolha = _capturar("Qual deseja cancelar? (número): ")
     except (EOFError, KeyboardInterrupt):
         return "Operação cancelada."
 
@@ -378,7 +392,7 @@ def _fluxo_cancelar_alarme() -> str:
     print("  0. Cancelar operação\n")
 
     try:
-        escolha = input("  Qual deseja cancelar? (número): ").strip()
+        escolha = _capturar("Qual deseja cancelar? (número): ")
     except (EOFError, KeyboardInterrupt):
         return "Operação cancelada."
 
@@ -516,7 +530,7 @@ def _fluxo_apagar_nota() -> str:
     print("  0. Cancelar\n")
 
     try:
-        escolha = input("  Qual nota apagar? (número): ").strip()
+        escolha = _capturar("Qual nota apagar? (número): ")
     except (EOFError, KeyboardInterrupt):
         return "Operação cancelada."
 
@@ -551,10 +565,10 @@ def _fluxo_autenticacao() -> tuple[str, dict]:
     print("\n=== Atlas Voice V1 ===")
     print("  1. Login")
     print("  2. Criar conta")
-    opcao = input("  Opção: ").strip()
+    opcao = input("  Opção: ").strip()  # login sempre por texto — intencional, por segurança
 
-    nome  = input("  Usuário: ").strip()
-    senha = input("  Senha: ").strip()
+    nome  = input("  Usuário: ").strip()   # login sempre por texto — intencional, por segurança
+    senha = input("  Senha: ").strip()     # login sempre por texto — intencional, por segurança
 
     if opcao == "2":
         r = _cadastrar(nome, senha)
@@ -627,7 +641,7 @@ def main() -> None:
 
     while True:
         try:
-            texto = ouvir()
+            texto = _capturar()
         except (EOFError, KeyboardInterrupt):
             texto = "sair"
 
@@ -665,6 +679,19 @@ def main() -> None:
             respondente = "atlas"
             _salvar_preferencia(nome, "respondente_preferido", respondente)
             print("  Atlas ativo.\n")
+            continue
+
+        # Alternância de modo de entrada
+        if "voz" in texto.lower() and any(p in texto.lower() for p in ("ativ", "modo")):
+            global _MODO_ENTRADA
+            _MODO_ENTRADA = "voz"
+            print("  Modo voz ativado. Atlas está ouvindo.\n")
+            falar("Modo voz ativado.")
+            continue
+
+        if "text" in texto.lower() and any(p in texto.lower() for p in ("ativ", "modo", "volta")):
+            _MODO_ENTRADA = "texto"
+            print("  Modo texto ativado.\n")
             continue
 
         # Menu de configuração
@@ -782,7 +809,8 @@ def main() -> None:
         resposta_texto, intencao, resp_usado = _processar(texto, respondente)
         adicionar_mensagem(resp_usado, resposta_texto)
         print(f"  {resp_usado.upper()}: {resposta_texto}\n")
-        falar(resposta_texto)
+        if _MODO_ENTRADA == "voz":
+            falar(resposta_texto)
 
         registrar_interacao(
             texto_usuario=texto,

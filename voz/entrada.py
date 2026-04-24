@@ -18,12 +18,12 @@ if not os.path.exists(_ffmpeg_dst):
 os.environ["PATH"] = _ffmpeg_dir + os.pathsep + os.environ["PATH"]
 
 # Carrega modelo Whisper
-modelo = whisper.load_model("base")
+modelo = whisper.load_model("small")
 
 def ouvir() -> str:
     DURACAO = 5
     TAXA = 16000
-    LIMIAR_SILENCIO = 200  # energia mínima para considerar que há fala
+    LIMIAR_SILENCIO = 800  # energia mínima para considerar que há fala
 
     print("[Atlas] Ouvindo...")
     audio = sd.rec(int(DURACAO * TAXA), samplerate=TAXA, channels=1, dtype='int16')
@@ -41,6 +41,11 @@ def ouvir() -> str:
 
     resultado = modelo.transcribe(nome_arquivo, language="pt", fp16=False)
     texto = resultado["text"].strip()
+
+    # Filtro de transcrição suja — ignora resultado com caracteres fora do português
+    import re as _re
+    if _re.search(r'[^\x00-\x7Fàáâãäéêíóôõúüçñ\s]', texto):
+        return "__silencio__"
 
     if not texto or len(texto) < 2:
         return "__silencio__"
