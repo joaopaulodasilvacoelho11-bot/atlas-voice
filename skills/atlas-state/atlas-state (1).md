@@ -9,11 +9,11 @@ description: Skill do projeto Atlas Voice. Use SEMPRE que o JP (João Paulo) ini
 
 **Projeto:** Atlas Voice  
 **Fundador:** João Paulo da Silva Coelho (JP) — Manaus, Brasil  
-**Repositório principal:** github.com/joaopaulodasilvacoelho11-bot/atlas-voice  
+**Repositório:** github.com/joaopaulodasilvacoelho11-bot/atlas-voice  
 **Backup:** github.com/joaopaulodasilvacoelho11-bot/AtlasVoiceBackup  
 **Localização local:** `C:\Users\Gleida\Desktop\atlas-voice-v1`  
 **Ambiente:** Anaconda — env: `atlasvoice`  
-**Ferramentas:** Claude.ai (planejamento), Claude Code (edição de código), Replit (testes)
+**Ferramentas:** Claude.ai (planejamento), Claude Code (edição de código), Replit (testes), Claude Design (dashboard visual)
 
 ---
 
@@ -25,23 +25,30 @@ Ao iniciar uma sessão com o JP, NÃO perguntar onde parou. Leia este documento,
 
 ---
 
-## Última Sessão — 23/04/2026
+## Última Sessão — 25/04/2026
 
 ### O que foi feito
-1. **Voz de entrada — Whisper** — `voz/entrada.py` criado — grava 5s do microfone, detecta energia, transcreve com modelo `base`
-2. **Voz de saída — ElevenLabs** — `voz/saida.py` criado — sintetiza resposta com `eleven_multilingual_v2`, reproduz com pygame
-3. **Filtro de energia** — silêncio ignorado antes de chamar o Whisper — evita transcrições fantasmas
-4. **Normalização de comandos** — variações de "sair" por voz reconhecidas corretamente
-5. **Integração no main.py** — `ouvir()` substituiu `input()`, `falar()` adicionado após cada resposta
-6. **ElevenLabs configurado** — plano Iniciante ($6/mês) contratado, chave e voice ID no `.env`
-7. **Commit V3 no GitHub** — `64ee7fc`
+
+1. **Modos de entrada (V3.1)** — `_MODO_ENTRADA` + `_capturar()` implementados no `main.py`
+2. **Alternância voz ↔ texto** — comandos "ativar voz" / "ativar texto" funcionando
+3. **`falar()` condicional** — só chama ElevenLabs em modo voz
+4. **Fluxos internos** — 4 `input()` hardcoded substituídos por `_capturar()`
+5. **Login documentado** — mantido em texto por segurança, comentado no código
+6. **VAD Silero (V3.2)** — `voz/entrada.py` refatorado com detecção de voz ativa
+7. **Whisper small** — modelo trocado de `base` para `small` — melhor precisão pt-BR
+8. **Filtro de transcrição suja** — caracteres fora do português ignorados
+9. **Commits no GitHub** — V3.1 (`992fb1c`), V3.2 (`674382c`)
+10. **Dashboard visual** — iniciado no Claude Design — layout completo aprovado
+11. **Identidade visual definida** — ampulheta de energia (vórtice helicoidal) como presença central
+12. **Claude Design — limite atingido** — renova terça-feira 28/04
 
 ### Estado atual do código
+
 ```
 voz/
-├── entrada.py   ← NOVO — Whisper base + filtro de energia + ffmpeg via imageio
-└── saida.py     ← NOVO — ElevenLabs eleven_multilingual_v2 + pygame
-main.py          ← ATUALIZADO — ouvir() + falar() integrados no loop principal
+├── entrada.py   ← VAD Silero + Whisper small + filtro sujeira
+└── saida.py     ← ElevenLabs eleven_multilingual_v2 + pygame
+main.py          ← _MODO_ENTRADA + _capturar() + alternância voz/texto
 .env             ← local only — ANTHROPIC_API_KEY + ELEVENLABS_API_KEY + ELEVENLABS_VOICE_ID
 ```
 
@@ -49,13 +56,16 @@ main.py          ← ATUALIZADO — ouvir() + falar() integrados no loop princip
 
 ## Próximo Passo
 
-**Melhorias de V3 — qualidade de voz**
+**1. Claude Design (terça 28/04) — ajuste final da ampulheta:**
+- Mover funil de cima mais para cima
+- Mover funil de baixo mais para baixo
+- Sem mudar o resto do layout
 
-1. **Detecção de voz ativa (VAD)** — gravar só quando houver fala, não tempo fixo de 5s
-2. **Login por voz** — eliminar input de teclado no início
-3. **Feedback sonoro** — Atlas emite som curto quando começa a ouvir
+**2. Exportar dashboard do Claude Design como HTML**
 
-**Depois:** V4 — Android
+**3. Integrar dashboard com backend Python via FastAPI**
+
+**4. Chat real — input do dashboard vai para o Atlas de verdade**
 
 ---
 
@@ -72,17 +82,41 @@ main.py          ← ATUALIZADO — ouvir() + falar() integrados no loop princip
 | Lembretes com prioridade | ✅ |
 | Memória entre sessões | ✅ |
 | Histórico de interações | ✅ |
-| Cronômetro | ✅ |
-| Erros global + log | ✅ |
-| Contexto de sessão | ✅ |
-| Respostas variadas | ✅ |
-| Timer regressivo | ✅ |
+| Cronômetro + Timer | ✅ |
 | Notas rápidas | ✅ |
-| Integração IA (V2) | ✅ |
-| Voz real — Whisper + ElevenLabs (V3) | ✅ Completa |
-| VAD — detecção de voz ativa | 🔜 Próximo |
-| Login por voz | 🔜 Próximo |
+| Integração IA — Claude API (V2) | ✅ |
+| Voz entrada — Whisper small + VAD (V3.2) | ✅ |
+| Voz saída — ElevenLabs (V3) | ✅ |
+| Modo texto / voz alternável (V3.1) | ✅ |
+| Dashboard visual — Claude Design | 🔄 Em refinamento |
+| Dashboard integrado ao backend | 🔜 Próximo |
 | Android (V4) | Futuro |
+
+---
+
+## Identidade Visual do Dashboard
+
+| Elemento | Definição |
+|---|---|
+| Presença central | Ampulheta de energia — vórtice helicoidal |
+| Cores | Azul ciano elétrico + dourado sobre fundo nebulosa azul escuro |
+| Funil superior | Anéis crescendo do centro para cima |
+| Funil inferior | Anéis crescendo do centro para baixo |
+| Centro | Ponto estreito brilhante conectando os dois funis |
+| Fundo | Nebulosa espacial azul profundo com estrelas |
+| ATLAS | Azul ciano — presença estratégica |
+| LYRA | Roxo/violeta — presença emocional |
+
+---
+
+## Decisões de Produto Definidas
+
+- **Texto = padrão** — gratuito, sem consumir crédito
+- **Voz = premium** — ativada por comando, consome ElevenLabs/Whisper
+- **No futuro** — sistema de créditos de voz para o usuário comprar
+- **Tela de boas-vindas** — usuário escolhe Atlas ou Lyra antes de começar
+- **Uma presença ativa** — não dois logos, uma presença ocupa a tela inteira
+- **Rosto futuro** — decisão adiada para fase com designer ou solução técnica adequada
 
 ---
 
@@ -92,7 +126,10 @@ main.py          ← ATUALIZADO — ouvir() + falar() integrados no loop princip
 |---|---|---|
 | V1 | Fundação — CLI funcional | ✅ |
 | V2 | Inteligência — IA externa (Claude API) | ✅ |
-| V3 | Voz real — Whisper + ElevenLabs | ✅ |
+| V3 | Voz real — Whisper + ElevenLabs + VAD | ✅ |
+| V3.1 | Modos texto/voz alternáveis | ✅ |
+| V3.2 | VAD Silero — captura natural | ✅ |
+| Dashboard | Interface visual — Claude Design | 🔄 |
 | V4 | Mobile — Android + voz nativa | Futuro |
 | V5 | Ecossistema — IoT, saúde, emergência | Futuro |
 | V6 | Escala nacional | Futuro |
@@ -123,4 +160,4 @@ python main.py
 ---
 
 *Atlas Voice — JP Silva — Manaus, Brasil*  
-*Atualizado: 23/04/2026*
+*Atualizado: 25/04/2026*
