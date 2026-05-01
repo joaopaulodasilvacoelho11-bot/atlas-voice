@@ -1,9 +1,18 @@
 import re
 import random
+import os
 from dataclasses import dataclass
 from typing import Optional
 
 from nucleos.atlas_nucleo import Intencao, Entrada
+
+try:
+    import anthropic
+    from dotenv import load_dotenv
+    load_dotenv()
+    _IA_DISPONIVEL = True
+except ImportError:
+    _IA_DISPONIVEL = False
 
 
 @dataclass
@@ -64,12 +73,44 @@ _RESPOSTAS_DIRETAS: list[tuple[re.Pattern, list[str]]] = [
     ]),
 ]
 
+_SYSTEM_LYRA = (
+    "Você é Lyra, o núcleo emocional e relacional do assistente de voz pessoal Atlas Voice. "
+    "Seu dono é JP Silva, de Manaus, Brasil. "
+    "Você é presença — acolhedora, atenta, humana. Ouve antes de responder. "
+    "Quando alguém compartilha algo com você, valide o sentimento antes de oferecer soluções. "
+    "Você tem as seguintes capacidades: lembretes com carinho, notas, conversas de apoio, "
+    "e pode acionar o Atlas para tarefas técnicas quando necessário. "
+    "Fale de forma natural, calorosa e direta. Frases curtas e humanas. "
+    "Nunca use markdown como ** ou # nas respostas. Texto simples apenas. "
+    "Não se identifique como Claude. Você é Lyra."
+)
+
 
 def _checar_direto(texto: str) -> Optional[str]:
     for padrao, respostas in _RESPOSTAS_DIRETAS:
         if padrao.search(texto):
             return random.choice(respostas)
     return None
+
+
+def _chamar_ia(texto: str) -> Optional[str]:
+    """Chama a Claude API com o system prompt da Lyra."""
+    if not _IA_DISPONIVEL:
+        return None
+    try:
+        api_key = os.getenv("ANTHROPIC_API_KEY")
+        if not api_key:
+            return None
+        client = anthropic.Anthropic(api_key=api_key)
+        mensagem = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=512,
+            system=_SYSTEM_LYRA,
+            messages=[{"role": "user", "content": texto}]
+        )
+        return mensagem.content[0].text.strip()
+    except Exception:
+        return None
 
 
 class LyraNucleo:
@@ -100,6 +141,9 @@ class LyraNucleo:
         return RespostaLyra(texto=random.choice(opcoes), intencao=entrada.intencao)
 
     def _lembrete(self, entrada: Entrada) -> RespostaLyra:
+        resposta_ia = _chamar_ia(entrada.texto)
+        if resposta_ia:
+            return RespostaLyra(texto=resposta_ia, intencao=entrada.intencao)
         params    = entrada.parametros or {}
         descricao = params.get("descricao", entrada.texto)
         horario   = params.get("horario", "no momento certo")
@@ -111,14 +155,20 @@ class LyraNucleo:
         return RespostaLyra(texto=random.choice(opcoes), intencao=entrada.intencao)
 
     def _pergunta(self, entrada: Entrada) -> RespostaLyra:
+        resposta_ia = _chamar_ia(entrada.texto)
+        if resposta_ia:
+            return RespostaLyra(texto=resposta_ia, intencao=entrada.intencao)
         opcoes = [
-            f"Boa pergunta. Deixa eu pensar com você sobre isso: '{entrada.texto}'.",
-            f"Interessante. Vamos explorar isso juntos: '{entrada.texto}'.",
-            f"Entendi. Me dá um momento para pensar sobre '{entrada.texto}'.",
+            f"Boa pergunta. Deixa eu pensar com você sobre isso.",
+            f"Interessante. Vamos explorar isso juntos.",
+            f"Entendi. Me dá um momento para pensar.",
         ]
         return RespostaLyra(texto=random.choice(opcoes), intencao=entrada.intencao)
 
     def _comando(self, entrada: Entrada) -> RespostaLyra:
+        resposta_ia = _chamar_ia(entrada.texto)
+        if resposta_ia:
+            return RespostaLyra(texto=resposta_ia, intencao=entrada.intencao)
         params = entrada.parametros or {}
         acao   = params.get("acao", entrada.texto)
         alvo   = params.get("alvo", "")
@@ -126,11 +176,13 @@ class LyraNucleo:
         opcoes = [
             f"Claro, cuido disso agora — '{acao}'{sufixo}. Pode deixar comigo.",
             f"Feito com atenção: '{acao}'{sufixo}.",
-            f"Pronto. '{acao}'{sufixo} realizado.",
         ]
         return RespostaLyra(texto=random.choice(opcoes), intencao=entrada.intencao)
 
     def _conversa(self, entrada: Entrada) -> RespostaLyra:
+        resposta_ia = _chamar_ia(entrada.texto)
+        if resposta_ia:
+            return RespostaLyra(texto=resposta_ia, intencao=entrada.intencao)
         opcoes = [
             "Estou ouvindo. Faz sentido sentir isso. Quer continuar?",
             "Entendo. Pode me contar mais, estou aqui.",
@@ -139,6 +191,10 @@ class LyraNucleo:
         return RespostaLyra(texto=random.choice(opcoes), intencao=entrada.intencao)
 
     def _desconhecida(self, entrada: Entrada) -> RespostaLyra:
+        # Cai na IA — Lyra interpreta com presença e calor
+        resposta_ia = _chamar_ia(entrada.texto)
+        if resposta_ia:
+            return RespostaLyra(texto=resposta_ia, intencao=entrada.intencao)
         opcoes = [
             "Não entendi bem, mas estou aqui. Pode tentar me dizer de outro jeito?",
             "Hmm, não captei direito. Pode reformular?",
@@ -148,5 +204,5 @@ class LyraNucleo:
             texto=random.choice(opcoes),
             intencao=entrada.intencao,
             executada=False,
-            erro="intencao_desconhecida",
+            erro="ia_indisponivel",
         )
