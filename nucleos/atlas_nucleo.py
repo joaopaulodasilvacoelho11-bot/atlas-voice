@@ -108,7 +108,12 @@ def _chamar_ia(texto: str, system_prompt: str) -> Optional[str]:
 _SYSTEM_ATLAS = (
     "Você é Atlas, o núcleo estratégico do assistente de voz pessoal Atlas Voice. "
     "Seu dono é JP Silva, de Manaus, Brasil. "
+    "Você tem as seguintes capacidades reais: alarmes, lembretes com horário e prioridade, "
+    "notas rápidas, cronômetro, timer, memória entre sessões e respostas inteligentes. "
+    "Quando o usuário pedir para criar um alarme ou lembrete, confirme que foi registrado — "
+    "mesmo que a integração com o sistema ainda esteja em desenvolvimento. "
     "Seja direto, objetivo e estratégico. Sem rodeios. Respostas curtas e precisas. "
+    "Nunca use markdown como ** ou # nas respostas. Texto simples apenas. "
     "Não se identifique como Claude. Você é Atlas."
 )
 
@@ -152,11 +157,9 @@ class AtlasNucleo:
         return Resposta(texto=random.choice(opcoes), intencao=entrada.intencao)
 
     def _pergunta(self, entrada: Entrada) -> Resposta:
-        # ← IA entra aqui
         resposta_ia = _chamar_ia(entrada.texto, _SYSTEM_ATLAS)
         if resposta_ia:
             return Resposta(texto=resposta_ia, intencao=entrada.intencao)
-        # fallback se a IA falhar
         opcoes = [
             "Não consegui processar agora. Tente novamente.",
             "Sem conexão com IA. Tente em instantes.",
@@ -165,6 +168,10 @@ class AtlasNucleo:
         return Resposta(texto=random.choice(opcoes), intencao=entrada.intencao, erro="ia_indisponivel")
 
     def _comando(self, entrada: Entrada) -> Resposta:
+        # Tenta IA primeiro para comandos complexos
+        resposta_ia = _chamar_ia(entrada.texto, _SYSTEM_ATLAS)
+        if resposta_ia:
+            return Resposta(texto=resposta_ia, intencao=entrada.intencao)
         params = entrada.parametros or {}
         acao   = params.get("acao", entrada.texto)
         alvo   = params.get("alvo", "")
@@ -177,11 +184,9 @@ class AtlasNucleo:
         return Resposta(texto=random.choice(opcoes), intencao=entrada.intencao)
 
     def _conversa(self, entrada: Entrada) -> Resposta:
-        # ← IA entra aqui também
         resposta_ia = _chamar_ia(entrada.texto, _SYSTEM_ATLAS)
         if resposta_ia:
             return Resposta(texto=resposta_ia, intencao=entrada.intencao)
-        # fallback
         opcoes = [
             f"Entendido: '{entrada.texto}'. Posso ajudar com algo concreto?",
             f"Recebi. Tem algum comando ou tarefa relacionada?",
@@ -190,14 +195,19 @@ class AtlasNucleo:
         return Resposta(texto=random.choice(opcoes), intencao=entrada.intencao, erro="ia_indisponivel")
 
     def _desconhecida(self, entrada: Entrada) -> Resposta:
+        # Cai na IA — deixa o Atlas interpretar livremente
+        resposta_ia = _chamar_ia(entrada.texto, _SYSTEM_ATLAS)
+        if resposta_ia:
+            return Resposta(texto=resposta_ia, intencao=entrada.intencao)
+        # Fallback só se a IA não estiver disponível
         opcoes = [
             "Não reconheci. Tente: alarme, lembrete, pergunta ou comando.",
-            "Comando não identificado. Pode reformular?",
-            "Não processado. Tente ser mais direto.",
+            "Pode reformular? Não processei.",
+            "Tente ser mais direto.",
         ]
         return Resposta(
             texto=random.choice(opcoes),
             intencao=entrada.intencao,
             executada=False,
-            erro="intencao_desconhecida",
+            erro="ia_indisponivel",
         )
