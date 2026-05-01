@@ -93,8 +93,8 @@ def _checar_direto(texto: str) -> Optional[str]:
     return None
 
 
-def _chamar_ia(texto: str) -> Optional[str]:
-    """Chama a Claude API com o system prompt da Lyra."""
+def _chamar_ia(texto: str, historico: list = None) -> Optional[str]:
+    """Chama a Claude API com histórico de sessão e system prompt da Lyra."""
     if not _IA_DISPONIVEL:
         return None
     try:
@@ -102,11 +102,13 @@ def _chamar_ia(texto: str) -> Optional[str]:
         if not api_key:
             return None
         client = anthropic.Anthropic(api_key=api_key)
+        mensagens = list(historico) if historico else []
+        mensagens.append({"role": "user", "content": texto})
         mensagem = client.messages.create(
             model="claude-haiku-4-5-20251001",
             max_tokens=512,
             system=_SYSTEM_LYRA,
-            messages=[{"role": "user", "content": texto}]
+            messages=mensagens,
         )
         return mensagem.content[0].text.strip()
     except Exception:
@@ -141,7 +143,8 @@ class LyraNucleo:
         return RespostaLyra(texto=random.choice(opcoes), intencao=entrada.intencao)
 
     def _lembrete(self, entrada: Entrada) -> RespostaLyra:
-        resposta_ia = _chamar_ia(entrada.texto)
+        hist = (entrada.parametros or {}).get("historico", [])
+        resposta_ia = _chamar_ia(entrada.texto, hist)
         if resposta_ia:
             return RespostaLyra(texto=resposta_ia, intencao=entrada.intencao)
         params    = entrada.parametros or {}
@@ -155,7 +158,8 @@ class LyraNucleo:
         return RespostaLyra(texto=random.choice(opcoes), intencao=entrada.intencao)
 
     def _pergunta(self, entrada: Entrada) -> RespostaLyra:
-        resposta_ia = _chamar_ia(entrada.texto)
+        hist = (entrada.parametros or {}).get("historico", [])
+        resposta_ia = _chamar_ia(entrada.texto, hist)
         if resposta_ia:
             return RespostaLyra(texto=resposta_ia, intencao=entrada.intencao)
         opcoes = [
@@ -166,7 +170,8 @@ class LyraNucleo:
         return RespostaLyra(texto=random.choice(opcoes), intencao=entrada.intencao)
 
     def _comando(self, entrada: Entrada) -> RespostaLyra:
-        resposta_ia = _chamar_ia(entrada.texto)
+        hist = (entrada.parametros or {}).get("historico", [])
+        resposta_ia = _chamar_ia(entrada.texto, hist)
         if resposta_ia:
             return RespostaLyra(texto=resposta_ia, intencao=entrada.intencao)
         params = entrada.parametros or {}
@@ -180,7 +185,8 @@ class LyraNucleo:
         return RespostaLyra(texto=random.choice(opcoes), intencao=entrada.intencao)
 
     def _conversa(self, entrada: Entrada) -> RespostaLyra:
-        resposta_ia = _chamar_ia(entrada.texto)
+        hist = (entrada.parametros or {}).get("historico", [])
+        resposta_ia = _chamar_ia(entrada.texto, hist)
         if resposta_ia:
             return RespostaLyra(texto=resposta_ia, intencao=entrada.intencao)
         opcoes = [
@@ -192,7 +198,8 @@ class LyraNucleo:
 
     def _desconhecida(self, entrada: Entrada) -> RespostaLyra:
         # Cai na IA — Lyra interpreta com presença e calor
-        resposta_ia = _chamar_ia(entrada.texto)
+        hist = (entrada.parametros or {}).get("historico", [])
+        resposta_ia = _chamar_ia(entrada.texto, hist)
         if resposta_ia:
             return RespostaLyra(texto=resposta_ia, intencao=entrada.intencao)
         opcoes = [

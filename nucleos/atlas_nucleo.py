@@ -85,8 +85,8 @@ def _checar_direto(texto: str) -> Optional[str]:
     return None
 
 
-def _chamar_ia(texto: str, system_prompt: str) -> Optional[str]:
-    """Chama a Claude API. Retorna None se falhar."""
+def _chamar_ia(texto: str, system_prompt: str, historico: list = None) -> Optional[str]:
+    """Chama a Claude API com histórico de sessão. Retorna None se falhar."""
     if not _IA_DISPONIVEL:
         return None
     try:
@@ -94,11 +94,14 @@ def _chamar_ia(texto: str, system_prompt: str) -> Optional[str]:
         if not api_key:
             return None
         client = anthropic.Anthropic(api_key=api_key)
+        # Monta mensagens com histórico + mensagem atual
+        mensagens = list(historico) if historico else []
+        mensagens.append({"role": "user", "content": texto})
         mensagem = client.messages.create(
             model="claude-haiku-4-5-20251001",
             max_tokens=512,
             system=system_prompt,
-            messages=[{"role": "user", "content": texto}]
+            messages=mensagens,
         )
         return mensagem.content[0].text.strip()
     except Exception:
@@ -157,7 +160,8 @@ class AtlasNucleo:
         return Resposta(texto=random.choice(opcoes), intencao=entrada.intencao)
 
     def _pergunta(self, entrada: Entrada) -> Resposta:
-        resposta_ia = _chamar_ia(entrada.texto, _SYSTEM_ATLAS)
+        hist = (entrada.parametros or {}).get("historico", [])
+        resposta_ia = _chamar_ia(entrada.texto, _SYSTEM_ATLAS, hist)
         if resposta_ia:
             return Resposta(texto=resposta_ia, intencao=entrada.intencao)
         opcoes = [
@@ -168,8 +172,8 @@ class AtlasNucleo:
         return Resposta(texto=random.choice(opcoes), intencao=entrada.intencao, erro="ia_indisponivel")
 
     def _comando(self, entrada: Entrada) -> Resposta:
-        # Tenta IA primeiro para comandos complexos
-        resposta_ia = _chamar_ia(entrada.texto, _SYSTEM_ATLAS)
+        hist = (entrada.parametros or {}).get("historico", [])
+        resposta_ia = _chamar_ia(entrada.texto, _SYSTEM_ATLAS, hist)
         if resposta_ia:
             return Resposta(texto=resposta_ia, intencao=entrada.intencao)
         params = entrada.parametros or {}
@@ -184,7 +188,8 @@ class AtlasNucleo:
         return Resposta(texto=random.choice(opcoes), intencao=entrada.intencao)
 
     def _conversa(self, entrada: Entrada) -> Resposta:
-        resposta_ia = _chamar_ia(entrada.texto, _SYSTEM_ATLAS)
+        hist = (entrada.parametros or {}).get("historico", [])
+        resposta_ia = _chamar_ia(entrada.texto, _SYSTEM_ATLAS, hist)
         if resposta_ia:
             return Resposta(texto=resposta_ia, intencao=entrada.intencao)
         opcoes = [
@@ -195,8 +200,8 @@ class AtlasNucleo:
         return Resposta(texto=random.choice(opcoes), intencao=entrada.intencao, erro="ia_indisponivel")
 
     def _desconhecida(self, entrada: Entrada) -> Resposta:
-        # Cai na IA — deixa o Atlas interpretar livremente
-        resposta_ia = _chamar_ia(entrada.texto, _SYSTEM_ATLAS)
+        hist = (entrada.parametros or {}).get("historico", [])
+        resposta_ia = _chamar_ia(entrada.texto, _SYSTEM_ATLAS, hist)
         if resposta_ia:
             return Resposta(texto=resposta_ia, intencao=entrada.intencao)
         # Fallback só se a IA não estiver disponível
