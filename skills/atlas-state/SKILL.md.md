@@ -13,7 +13,7 @@ description: Skill do projeto Atlas Voice. Use SEMPRE que o JP (João Paulo) ini
 **Backup:** github.com/joaopaulodasilvacoelho11-bot/AtlasVoiceBackup  
 **Localização local:** `C:\Users\Gleida\Desktop\atlas-voice-v1`  
 **Ambiente:** Anaconda — env: `atlasvoice`  
-**Ferramentas:** Claude.ai (planejamento), Claude Code (edição de código), Replit (testes), Claude Design (dashboard visual)
+**Ferramentas:** Claude.ai (planejamento), Claude Code (edição de código), Replit (testes)
 
 ---
 
@@ -25,49 +25,46 @@ Ao iniciar uma sessão com o JP, NÃO perguntar onde parou. Leia este documento,
 
 ---
 
-## Última Sessão — 29/04/2026
+## Última Sessão — 01/05/2026
 
 ### O que foi feito
 
-1. **Dashboard exportado do Claude Design** — HTML completo com todos os arquivos (app.jsx, vortex.jsx, background.jsx, styles.css, tweaks-panel.jsx)
-2. **Ampulheta removida** — stage central limpo, sem presença visual ainda
-3. **Esfera de presença construída** — canvas animado com 4 estados:
-   - `listening` — ondas de sonar se expandindo
-   - `speaking` — ondas de som + raios de plasma coloridos
-   - `thinking` — anéis concêntricos girando em direções opostas + arco de scan roxo
-   - `idle` — respiração mínima, quase apagada
-4. **ATLAS/LYRA implementados** — dois botões acima da esfera trocam a presença:
-   - ATLAS → azul ciano
-   - LYRA → roxo violeta
-   - Transição de cor suave na esfera ao trocar
-5. **Integrado no Claude Design** — esfera animada substituiu a esfera estática, ATLAS/LYRA posicionados corretamente acima da esfera no painel direito
-6. **Layout finalizado** — TROCAR PRESENÇA no topbar, OUVINDO/ATLAS/LYRA/esfera/MEMÓRIA/CONTEXTO/SESSÃO no painel direito, tudo alinhado
+1. **Dashboard HTML completo** — arquivo único `atlas_dashboard.html` funcional, abre direto no navegador
+2. **Núcleo central construído** — canvas animado com:
+   - Esfera orbital com 4 anéis giratórios inclinados (dashed, mix de velocidades)
+   - 60 partículas em órbita reagindo ao estado
+   - 32 brasas de fogo delicadas ao redor do núcleo (âmbar + cor da presença)
+   - Core pulsante com gradiente branco → cor da presença → escuro
+3. **ATLAS/LYRA integrados** — troca de cor em todo o núcleo (ciano #4dd9ff / violeta #b45aff)
+4. **Esfera do painel direito removida** — painel direito limpo: estado em texto + botões ATLAS/LYRA + stats
+5. **Posicionamento** — núcleo no terço superior, transcript e dock abaixo sem sobrepor
+6. **Fogo afinado** — brasas pequenas, lentas, delicadas — aprovado pelo JP
 
 ### Estado atual do dashboard
 
 ```
-Topbar:        ATLAS logo | Relógio | TROCAR PRESENÇA
-Painel esq:    LATÊNCIA | SINAL | MODELO | CANAL
-Centro:        Stage vazio (ampulheta removida)
-Painel dir:    OUVINDO | ATLAS/LYRA | Esfera animada | MEMÓRIA | CONTEXTO | SESSÃO
-Transcript:    Mensagens acima do dock
-Dock:          Input de chat + botão ENVIAR
+Topbar:        ATLAS logo | Relógio em tempo real | TROCAR PRESENÇA (funcional)
+Painel esq:    LATÊNCIA | SINAL | MODELO (muda com presença) | CANAL animado
+Centro:        Núcleo animado — anéis orbitais + partículas + brasas de fogo
+Painel dir:    OUVINDO/estado | ATLAS/LYRA botões | MEMÓRIA | CONTEXTO | SESSÃO
+Transcript:    Últimas 3 mensagens acima do dock
+Dock:          Input + botão ENVIAR (respostas simuladas por enquanto)
 ```
 
-### Arquivos da esfera
+### Arquivo entregue
 
-- `esfera_final2.html` — versão standalone para testes
-- `esfera_design_final.js` — componente para integração
+- `atlas_dashboard.html` — dashboard completo, standalone, abre no browser
 
 ---
 
 ## Próximo Passo
 
-**Integrar o núcleo central** — o stage central está vazio. Decidir e construir a presença visual central do Atlas Voice (o núcleo foi iniciado mas não integrado ao dashboard).
+**Integrar backend Python ao dashboard** — substituir as respostas simuladas do chat por chamadas reais à API do Atlas/Lyra via FastAPI.
 
-Opções em aberto:
-- Núcleo infinito animado (nucleo_atlas_v4.html — construído, não integrado)
-- Outra presença central a definir com JP
+Fluxo alvo:
+1. Usuário digita no dock → POST para FastAPI local
+2. FastAPI chama `atlas_nucleo.py` ou `lyra_nucleo.py`
+3. Resposta aparece no transcript do dashboard
 
 ---
 
@@ -91,10 +88,9 @@ Opções em aberto:
 | Voz saída — ElevenLabs (V3) | ✅ |
 | Modo texto / voz alternável (V3.1) | ✅ |
 | Dashboard — layout base | ✅ |
-| Esfera de presença animada (4 estados) | ✅ |
+| Núcleo central animado com fogo | ✅ |
 | ATLAS/LYRA com troca de cor | ✅ |
-| Centro do dashboard (núcleo visual) | 🔜 Próximo |
-| Dashboard integrado ao backend | 🔜 Futuro |
+| Dashboard integrado ao backend (FastAPI) | 🔜 Próximo |
 | Android (V4) | Futuro |
 
 ---
@@ -103,15 +99,16 @@ Opções em aberto:
 
 | Elemento | Definição |
 |---|---|
-| Esfera de presença | Canvas animado — azul ciano (ATLAS) / roxo violeta (LYRA) |
-| Estado ouvindo | Ondas de sonar expandindo |
-| Estado falando | Ondas de som + raios de plasma |
-| Estado processando | Anéis concêntricos + arco de scan |
-| Estado idle | Respiração mínima |
-| Cores ATLAS | Azul ciano #4dd9ff |
-| Cores LYRA | Roxo violeta #b45aff |
+| Núcleo central | Canvas 420px — anéis orbitais + partículas + brasas |
+| Brasas ATLAS | Âmbar/laranja + wisps ciano #4dd9ff |
+| Brasas LYRA | Âmbar/laranja + wisps violeta #b45aff |
+| Estado ouvindo | Pulse suave, brasas lentas |
+| Estado falando | Burst de raios + brasas aceleradas |
+| Estado processando | Arco de scan violeta + anéis rápidos |
+| Estado idle | Respiração mínima, brasas quase apagadas |
 | Fundo | Nebulosa espacial azul profundo com estrelas |
-| Centro | Vazio — aguarda definição do núcleo |
+| Fonte display | Orbitron |
+| Fonte mono | JetBrains Mono |
 
 ---
 
@@ -119,8 +116,9 @@ Opções em aberto:
 
 - **Texto = padrão** — gratuito, sem consumir crédito
 - **Voz = premium** — ativada por comando, consome ElevenLabs/Whisper
-- **ATLAS e LYRA** — mesma esfera, cores diferentes, botões simples acima
-- **Esfera nunca é estática** — sempre viva, mesmo em idle
+- **ATLAS e LYRA** — mesma interface, cores diferentes, botões simples
+- **Núcleo nunca é estático** — sempre vivo, mesmo em idle
+- **Presença evolui com o tempo** — design do núcleo será refinado progressivamente
 
 ---
 
@@ -133,8 +131,8 @@ Opções em aberto:
 | V3 | Voz real — Whisper + ElevenLabs + VAD | ✅ |
 | V3.1 | Modos texto/voz alternáveis | ✅ |
 | V3.2 | VAD Silero — captura natural | ✅ |
-| Dashboard | Interface visual — layout base + esfera | ✅ |
-| Dashboard | Núcleo central visual | 🔜 |
+| Dashboard | Interface visual completa com núcleo animado | ✅ |
+| Dashboard | Integração FastAPI — chat real | 🔜 |
 | V4 | Mobile — Android + voz nativa | Futuro |
 | V5 | Ecossistema — IoT, saúde, emergência | Futuro |
 | V6 | Escala nacional | Futuro |
@@ -162,7 +160,9 @@ cd C:\Users\Gleida\Desktop\atlas-voice-v1
 python main.py
 ```
 
+Dashboard: abrir `atlas_dashboard.html` direto no navegador (F11 para tela cheia)
+
 ---
 
 *Atlas Voice — JP Silva — Manaus, Brasil*  
-*Atualizado: 29/04/2026*
+*Atualizado: 01/05/2026*
