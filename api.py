@@ -147,13 +147,50 @@ def chat_lyra(msg: Mensagem):
     }
 
 
+class MensagemAlarme(BaseModel):
+    horario: str
+    mensagem: str = "Alarme Atlas Voice"
+
+
 @app.post("/alarme")
-def criar_alarme(msg: Mensagem):
+def criar_alarme(dados: MensagemAlarme):
     """Cria um alarme real via módulo de alarmes."""
     try:
         from funcionalidades.alarmes import criar_alarme as _criar_alarme
-        resultado = _criar_alarme(msg.texto)
-        return {"status": "criado", "detalhe": str(resultado)}
+        resultado = _criar_alarme(dados.horario, dados.mensagem)
+        return resultado
+    except Exception as e:
+        return {"status": "erro", "detalhe": str(e)}
+
+
+@app.get("/alarmes")
+def listar_alarmes():
+    """Lista alarmes ativos."""
+    try:
+        from funcionalidades.alarmes import listar_alarmes as _listar
+        return {"alarmes": _listar()}
+    except Exception as e:
+        return {"alarmes": [], "erro": str(e)}
+
+
+@app.post("/alarmes/verificar")
+def verificar_alarmes():
+    """Verifica e dispara alarmes que chegaram no horário."""
+    try:
+        from funcionalidades.alarmes import verificar_alarmes as _verificar
+        disparados = _verificar()
+        return {"disparados": disparados, "total": len(disparados)}
+    except Exception as e:
+        return {"disparados": [], "erro": str(e)}
+
+
+@app.post("/voz/falar")
+def voz_falar(msg: Mensagem):
+    """Converte texto em voz via ElevenLabs e reproduz."""
+    try:
+        from voz.saida import falar
+        falar(msg.texto)
+        return {"status": "ok"}
     except Exception as e:
         return {"status": "erro", "detalhe": str(e)}
 
