@@ -25,19 +25,27 @@ description: Skill do projeto Atlas Voice. Use SEMPRE que o JP (João Paulo) ini
 
 ### O que foi feito
 
-1. Degrau 1 concluído — alarmes reais via IA, funcionando em produção
-2. Extrator de alarme criado — `funcionalidades/extrator_alarme.py`
-3. Detecção automática de intenção e horário no texto do usuário
-4. Alarme persistente — repete a cada 20s até o usuário confirmar
-5. Cancelamento natural — "ok", "acordei", "pode parar", "entendido"
-6. Vozes distintas — Atlas e Lyra com Voice IDs diferentes no ElevenLabs
-7. Atlas: sB7vwSCyX0tQmU24cW2C — Lyra: ZbmOZ3GRVkMFzTTGCFG7 (Lyra presença)
-8. Botão de áudio ON/OFF recuperado no dock
-9. Voz integrada nas respostas normais do chat
-10. Tag correta no disparo — ATLAS ou LYRA conforme presença ativa
-11. Extrator integrado no chat_lyra também — não só no chat_atlas
-12. 3 documentos mestres criados — visão, defesa e segurança por versão
-13. Commit: "Degrau 1 completo: alarmes reais via IA, persistentes, vozes distintas Atlas/Lyra"
+**Degrau 1 — Alarmes reais via IA** ✅
+1. Extrator de alarme criado — `funcionalidades/extrator_alarme.py`
+2. Detecção automática de intenção e horário no texto do usuário
+3. Alarme persistente — repete a cada 20s até o usuário confirmar
+4. Cancelamento natural — "ok", "acordei", "pode parar", "entendido"
+5. Vozes distintas — Atlas e Lyra com Voice IDs diferentes no ElevenLabs
+6. Atlas: sB7vwSCyX0tQmU24cW2C — Lyra: ZbmOZ3GRVkMFzTTGCFG7
+7. Botão de áudio ON/OFF recuperado no dock
+8. Extrator integrado no chat_lyra também — não só no chat_atlas
+9. Commit: "Degrau 1 completo: alarmes reais via IA, persistentes, vozes distintas Atlas/Lyra"
+
+**Degrau 2 — Lembretes reais via IA** ✅
+1. `funcionalidades/extrator_lembrete.py` criado — detecta intenção + horário + prioridade
+2. Regex com lookahead/lookbehind — cobre `15:30`, `15h30`, `15h`, `8 horas`
+3. Prioridade automática — "urgente" → Alta, "quando der" → Baixa, padrão → Normal
+4. `api.py` — integrado no `chat_atlas` e `chat_lyra` + 3 endpoints novos
+5. Endpoints: `POST /lembrete`, `GET /lembretes`, `POST /lembretes/verificar`
+6. `atlas_dashboard.html` — loop de 15s agora verifica alarmes E lembretes
+7. Fix crítico — removido `return` prematuro que bloqueava o bloco de lembretes
+8. Lyra disparando lembretes com voz — testado e confirmado
+9. Commit: "[feat] Degrau 2 completo: lembretes reais via IA, disparo no horário, Atlas e Lyra"
 
 ### Como rodar
 
@@ -50,9 +58,9 @@ uvicorn api:app --reload --port 8000
 
 ---
 
-## Próximo Passo — Degrau 2
+## Próximo Passo — Degrau 3
 
-**Lembretes reais via IA** — mesma lógica dos alarmes. O usuário fala "me lembra de ligar pro médico às 14h" → sistema extrai intenção, horário e descrição → salva no JSON → dispara no horário com voz e nome do usuário.
+**Loop de verificação no backend** — BackgroundTask do FastAPI rodando a cada 30s, verificando alarmes e lembretes automaticamente, independente do dashboard estar aberto. Dispara voz direto do backend quando o horário chega.
 
 ---
 
@@ -68,6 +76,9 @@ uvicorn api:app --reload --port 8000
 | `/alarme` | POST | Criar alarme no JSON |
 | `/alarmes` | GET | Listar alarmes ativos |
 | `/alarmes/verificar` | POST | Disparar alarmes no horário |
+| `/lembrete` | POST | Criar lembrete no JSON |
+| `/lembretes` | GET | Listar lembretes ativos |
+| `/lembretes/verificar` | POST | Disparar lembretes no horário |
 | `/sessao` | GET | Dados da sessão atual |
 | `/sessao/resetar` | POST | Limpar histórico |
 
@@ -78,8 +89,8 @@ uvicorn api:app --reload --port 8000
 | Degrau | Status |
 |---|---|
 | 1 — Alarmes reais via IA | ✅ CONCLUÍDO |
-| 2 — Lembretes reais via IA | 🔜 PRÓXIMO |
-| 3 — Loop de verificação no backend | 🔜 |
+| 2 — Lembretes reais via IA | ✅ CONCLUÍDO |
+| 3 — Loop de verificação no backend | 🔜 PRÓXIMO |
 | 4 — Memória de longo prazo real | 🔜 |
 | 5 — Lyra integrada com Atlas | 🔜 |
 | 6 — Dashboard na pasta do projeto | 🔜 |
@@ -102,7 +113,8 @@ uvicorn api:app --reload --port 8000
 | Latência real, sessão viva, núcleo reativo | ✅ |
 | Alarmes reais via IA — persistentes | ✅ |
 | Cancelamento natural de alarme por voz | ✅ |
-| Lembretes via IA | 🔜 Degrau 2 |
+| Lembretes reais via IA — com prioridade | ✅ |
+| Disparo de lembretes no horário com voz | ✅ |
 | Loop de verificação backend | 🔜 Degrau 3 |
 | Script iniciar.bat | 🔜 Degrau 7 |
 | Android (V2.0) | Futuro |
@@ -110,4 +122,4 @@ uvicorn api:app --reload --port 8000
 ---
 
 *Atlas Voice — JP Silva — Manaus, Brasil*  
-*Atualizado: 06/05/2026 — Degrau 1 concluído — Degrau 2 próximo*
+*Atualizado: 06/05/2026 — Degrau 2 concluído — Degrau 3 próximo*
