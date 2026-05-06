@@ -139,13 +139,31 @@ def chat_atlas(msg: Mensagem):
     except Exception:
         pass
 
+    # Degrau 2: Lembrete real via IA
+    lembrete_criado = None
+    try:
+        from funcionalidades.extrator_lembrete import tentar_extrair_lembrete
+        from funcionalidades.lembretes import criar_lembrete as _criar_lembrete
+        dados_l = tentar_extrair_lembrete(msg.texto)
+        print(f"[DEBUG LEMBRETE] texto: {msg.texto!r}")
+        print(f"[DEBUG LEMBRETE] dados: {dados_l}")
+        if dados_l:
+            resultado_l = _criar_lembrete(dados_l["horario"], dados_l["mensagem"], dados_l["prioridade"])
+            lembrete_criado = resultado_l
+            horario_l = dados_l["horario"]
+            if "lembrete" not in texto_final.lower() and horario_l not in texto_final:
+                texto_final = texto_final + f"\nLembrete registrado para {horario_l}."
+    except Exception:
+        pass
+
     return {
-        "resposta":      texto_final,
-        "nucleo":        "atlas",
-        "intencao":      resposta.intencao.value,
-        "executada":     resposta.executada,
-        "latencia_ms":   latencia,
-        "alarme_criado": alarme_criado,
+        "resposta":        texto_final,
+        "nucleo":         "atlas",
+        "intencao":       resposta.intencao.value,
+        "executada":      resposta.executada,
+        "latencia_ms":    latencia,
+        "alarme_criado":  alarme_criado,
+        "lembrete_criado": lembrete_criado,
     }
 
 
@@ -170,13 +188,26 @@ def chat_lyra(msg: Mensagem):
     except Exception:
         pass
 
+    # Degrau 2: Lembrete real via IA
+    lembrete_criado = None
+    try:
+        from funcionalidades.extrator_lembrete import tentar_extrair_lembrete
+        from funcionalidades.lembretes import criar_lembrete as _criar_lembrete
+        dados_l = tentar_extrair_lembrete(msg.texto)
+        if dados_l:
+            resultado_l = _criar_lembrete(dados_l["horario"], dados_l["mensagem"], dados_l["prioridade"])
+            lembrete_criado = resultado_l
+    except Exception:
+        pass
+
     return {
-        "resposta":      resposta.texto,
-        "nucleo":        "lyra",
-        "intencao":      resposta.intencao.value,
-        "executada":     resposta.executada,
-        "latencia_ms":   latencia,
-        "alarme_criado": alarme_criado,
+        "resposta":        resposta.texto,
+        "nucleo":          "lyra",
+        "intencao":        resposta.intencao.value,
+        "executada":       resposta.executada,
+        "latencia_ms":     latencia,
+        "alarme_criado":   alarme_criado,
+        "lembrete_criado": lembrete_criado,
     }
 
 
@@ -211,6 +242,40 @@ def verificar_alarmes():
     """Verifica e dispara alarmes que chegaram no horário."""
     try:
         from funcionalidades.alarmes import verificar_alarmes as _verificar
+        disparados = _verificar()
+        return {"disparados": disparados, "total": len(disparados)}
+    except Exception as e:
+        return {"disparados": [], "erro": str(e)}
+
+
+class MensagemLembrete(BaseModel):
+    horario: str
+    mensagem: str = "Lembrete Atlas Voice"
+    prioridade: str = "Normal"
+
+
+@app.post("/lembrete")
+def criar_lembrete_endpoint(dados: MensagemLembrete):
+    try:
+        from funcionalidades.lembretes import criar_lembrete as _criar_lembrete
+        return _criar_lembrete(dados.horario, dados.mensagem, dados.prioridade)
+    except Exception as e:
+        return {"status": "erro", "detalhe": str(e)}
+
+
+@app.get("/lembretes")
+def listar_lembretes_endpoint():
+    try:
+        from funcionalidades.lembretes import listar_lembretes as _listar
+        return {"lembretes": _listar()}
+    except Exception as e:
+        return {"lembretes": [], "erro": str(e)}
+
+
+@app.post("/lembretes/verificar")
+def verificar_lembretes_endpoint():
+    try:
+        from funcionalidades.lembretes import verificar_lembretes as _verificar
         disparados = _verificar()
         return {"disparados": disparados, "total": len(disparados)}
     except Exception as e:

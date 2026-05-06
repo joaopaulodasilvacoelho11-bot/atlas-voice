@@ -815,8 +815,7 @@ function App(){
         const res=await fetch("http://127.0.0.1:8000/alarmes/verificar",{method:"POST"});
         if(!res.ok)return;
         const data=await res.json();
-        if(!data.disparados||!data.disparados.length)return;
-        for(const alarme of data.disparados){
+        for(const alarme of (data.disparados||[])){
           const hm=String(alarme.horario||"").slice(11,16);
           const texto=`JP, são ${hm}. ${alarme.mensagem}.`;
           setMessages(m=>[...m,{from:presenceRef.current,text:texto}]);
@@ -828,6 +827,23 @@ function App(){
             }).catch(()=>{});
           }
           if(!alarmeAtivoRef.current) setAlarmeAtivo(alarme);
+        }
+      }catch(e){}
+      try{
+        const resL=await fetch("http://127.0.0.1:8000/lembretes/verificar",{method:"POST"});
+        if(!resL.ok)return;
+        const dataL=await resL.json();
+        if(!dataL.disparados||!dataL.disparados.length)return;
+        for(const lembrete of dataL.disparados){
+          const texto=`Lembrete: ${lembrete.mensagem} — prioridade ${lembrete.prioridade}`;
+          setMessages(m=>[...m,{from:presenceRef.current,text:texto}]);
+          if(voiceEnabledRef.current&&tRef.current.voiceMode!=="idle"){
+            fetch("http://127.0.0.1:8000/voz/falar",{
+              method:"POST",
+              headers:{"Content-Type":"application/json"},
+              body:JSON.stringify({texto,presence:presenceRef.current}),
+            }).catch(()=>{});
+          }
         }
       }catch(e){}
     };

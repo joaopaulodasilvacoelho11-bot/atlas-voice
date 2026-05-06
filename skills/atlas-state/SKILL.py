@@ -21,50 +21,38 @@ description: Skill do projeto Atlas Voice. Use SEMPRE que o JP (João Paulo) ini
 
 ---
 
-## Última Sessão — 01/05/2026 (noite)
+## Última Sessão — 06/05/2026
 
 ### O que foi feito
 
-1. FastAPI completa com todos os endpoints operantes
-2. Atlas e Lyra com IA real (Claude Haiku) e personalidades distintas
-3. Atlas conhece a Lyra como parceira — system prompt atualizado
-4. Memória de sessão + persistência em `data/memoria_sessao.json`
-5. Sessão viva — contador real de tempo e mensagens
-6. Latência real no painel
-7. Núcleo reativo — PROCESSANDO → FALANDO → OUVINDO
-8. Título ATLAS/LYRA reativo com cor e nome corretos
-9. Pontos animados no dock durante espera
-10. Microfone conectado — Whisper + VAD transcreve e envia automaticamente
-11. ElevenLabs conectado — botão de voz no dock, Atlas e Lyra falam após responder
-12. Alarmes — endpoint `/alarme` existe e salva no JSON, mas IA ainda não chama automaticamente
-13. Verificação de alarmes a cada 30s no dashboard
-14. Roadmap 1.0 criado — 9 degraus até o fechamento (`skills/atlas-roadmap/SKILL.md`)
+1. Degrau 1 concluído — alarmes reais via IA, funcionando em produção
+2. Extrator de alarme criado — `funcionalidades/extrator_alarme.py`
+3. Detecção automática de intenção e horário no texto do usuário
+4. Alarme persistente — repete a cada 20s até o usuário confirmar
+5. Cancelamento natural — "ok", "acordei", "pode parar", "entendido"
+6. Vozes distintas — Atlas e Lyra com Voice IDs diferentes no ElevenLabs
+7. Atlas: sB7vwSCyX0tQmU24cW2C — Lyra: ZbmOZ3GRVkMFzTTGCFG7 (Lyra presença)
+8. Botão de áudio ON/OFF recuperado no dock
+9. Voz integrada nas respostas normais do chat
+10. Tag correta no disparo — ATLAS ou LYRA conforme presença ativa
+11. Extrator integrado no chat_lyra também — não só no chat_atlas
+12. 3 documentos mestres criados — visão, defesa e segurança por versão
+13. Commit: "Degrau 1 completo: alarmes reais via IA, persistentes, vozes distintas Atlas/Lyra"
 
 ### Como rodar
 
 ```bash
-# Terminal — API
 conda activate atlasvoice
 cd C:\Users\Gleida\Desktop\atlas-voice-v1
 uvicorn api:app --reload --port 8000
-
-# Browser — abrir da pasta do projeto
-C:\Users\Gleida\Desktop\atlas-voice-v1\atlas_dashboard.html
+# Browser — abrir atlas_dashboard.html
 ```
 
 ---
 
-## Próximo Passo — Degrau 1 do Roadmap
+## Próximo Passo — Degrau 2
 
-**Alarmes reais via IA** — quando o usuário pede um alarme, a IA confirma em texto mas não chama o endpoint `/alarme`. O JSON fica vazio.
-
-**O que precisa ser feito:**
-- Detectar intenção de alarme na resposta da IA
-- Extrair horário e descrição
-- Chamar `/alarme` automaticamente com os dados
-- Atlas confirma que foi salvo de verdade
-
-**Critério de conclusão:** "me acorda às 21h" → aparece no `alarmes.json` → dispara em voz no horário.
+**Lembretes reais via IA** — mesma lógica dos alarmes. O usuário fala "me lembra de ligar pro médico às 14h" → sistema extrai intenção, horário e descrição → salva no JSON → dispara no horário com voz e nome do usuário.
 
 ---
 
@@ -89,8 +77,8 @@ C:\Users\Gleida\Desktop\atlas-voice-v1\atlas_dashboard.html
 
 | Degrau | Status |
 |---|---|
-| 1 — Alarmes reais via IA | 🔜 PRÓXIMO |
-| 2 — Lembretes reais via IA | 🔜 |
+| 1 — Alarmes reais via IA | ✅ CONCLUÍDO |
+| 2 — Lembretes reais via IA | 🔜 PRÓXIMO |
 | 3 — Loop de verificação no backend | 🔜 |
 | 4 — Memória de longo prazo real | 🔜 |
 | 5 — Lyra integrada com Atlas | 🔜 |
@@ -105,15 +93,15 @@ C:\Users\Gleida\Desktop\atlas-voice-v1\atlas_dashboard.html
 
 | Funcionalidade | Status |
 |---|---|
-| Atlas + Lyra com IA real | ✅ |
-| Atlas conhece Lyra como parceira | ✅ |
+| Atlas + Lyra com IA real (Claude Haiku) | ✅ |
+| Vozes distintas Atlas e Lyra | ✅ |
 | Dashboard completo + backend integrado | ✅ |
 | Memória persistente entre sessões | ✅ |
 | Microfone (Whisper + VAD) no dashboard | ✅ |
-| ElevenLabs no dashboard (voz ON/OFF) | ✅ |
+| ElevenLabs — botão ON/OFF no dock | ✅ |
 | Latência real, sessão viva, núcleo reativo | ✅ |
-| Alarmes endpoint funcionando | ✅ |
-| Alarmes via IA (extração automática) | 🔜 Degrau 1 |
+| Alarmes reais via IA — persistentes | ✅ |
+| Cancelamento natural de alarme por voz | ✅ |
 | Lembretes via IA | 🔜 Degrau 2 |
 | Loop de verificação backend | 🔜 Degrau 3 |
 | Script iniciar.bat | 🔜 Degrau 7 |
@@ -121,5 +109,5 @@ C:\Users\Gleida\Desktop\atlas-voice-v1\atlas_dashboard.html
 
 ---
 
-*Atlas Voice — JP Silva — Manaus, Brasil*
-*Atualizado: 01/05/2026 — 20:50*
+*Atlas Voice — JP Silva — Manaus, Brasil*  
+*Atualizado: 06/05/2026 — Degrau 1 concluído — Degrau 2 próximo*
