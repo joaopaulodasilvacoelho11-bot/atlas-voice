@@ -71,6 +71,7 @@ _carregar_memoria()
 
 class Mensagem(BaseModel):
     texto: str
+    presence: str = "atlas"
 
 
 def _montar_entrada(texto: str, nucleo: str) -> Entrada:
@@ -121,12 +122,30 @@ def chat_atlas(msg: Mensagem):
     resposta = atlas.processar(entrada)
     _adicionar_historico("atlas", "assistant", resposta.texto)
     latencia = int((time.time() - t0) * 1000)
+
+    # Degrau 1: Alarme real via IA
+    texto_final = resposta.texto
+    alarme_criado = None
+    try:
+        from funcionalidades.extrator_alarme import tentar_extrair_alarme
+        from funcionalidades.alarmes import criar_alarme as _criar_alarme
+        dados = tentar_extrair_alarme(msg.texto)
+        if dados:
+            resultado = _criar_alarme(dados["horario"], dados["mensagem"])
+            alarme_criado = resultado
+            horario = dados["horario"]
+            if "alarme" not in resposta.texto.lower() and horario not in resposta.texto:
+                texto_final = resposta.texto + f"\nAlarme registrado para {horario}."
+    except Exception:
+        pass
+
     return {
-        "resposta":  resposta.texto,
-        "nucleo":    "atlas",
-        "intencao":  resposta.intencao.value,
-        "executada": resposta.executada,
-        "latencia_ms": latencia,
+        "resposta":      texto_final,
+        "nucleo":        "atlas",
+        "intencao":      resposta.intencao.value,
+        "executada":     resposta.executada,
+        "latencia_ms":   latencia,
+        "alarme_criado": alarme_criado,
     }
 
 
@@ -138,12 +157,26 @@ def chat_lyra(msg: Mensagem):
     resposta = lyra.processar(entrada)
     _adicionar_historico("lyra", "assistant", resposta.texto)
     latencia = int((time.time() - t0) * 1000)
+
+    # Degrau 1: Alarme real via IA
+    alarme_criado = None
+    try:
+        from funcionalidades.extrator_alarme import tentar_extrair_alarme
+        from funcionalidades.alarmes import criar_alarme as _criar_alarme
+        dados = tentar_extrair_alarme(msg.texto)
+        if dados:
+            resultado = _criar_alarme(dados["horario"], dados["mensagem"])
+            alarme_criado = resultado
+    except Exception:
+        pass
+
     return {
-        "resposta":  resposta.texto,
-        "nucleo":    "lyra",
-        "intencao":  resposta.intencao.value,
-        "executada": resposta.executada,
-        "latencia_ms": latencia,
+        "resposta":      resposta.texto,
+        "nucleo":        "lyra",
+        "intencao":      resposta.intencao.value,
+        "executada":     resposta.executada,
+        "latencia_ms":   latencia,
+        "alarme_criado": alarme_criado,
     }
 
 
@@ -189,7 +222,7 @@ def voz_falar(msg: Mensagem):
     """Converte texto em voz via ElevenLabs e reproduz."""
     try:
         from voz.saida import falar
-        falar(msg.texto)
+        falar(msg.texto, presence=msg.presence)
         return {"status": "ok"}
     except Exception as e:
         return {"status": "erro", "detalhe": str(e)}

@@ -148,7 +148,7 @@ html,body{height:100%;background:#000;color:var(--text);font-family:'Inter',syst
 .msg-tag{font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:.24em;color:var(--cyan);flex-shrink:0;width:48px}
 .msg--you .msg-tag{color:var(--amber)}
 .msg--lyra .msg-tag{color:var(--lyra-bright)}
-.msg-text{line-height:1.5}
+.msg-text{line-height:1.5;white-space:pre-wrap}
 .dot-pulse{display:inline-flex;gap:4px}
 .dock-typing{display:flex;align-items:center;gap:3px;padding:0 8px}
 .dock-typing span{width:5px;height:5px;border-radius:50%;background:var(--cyan);box-shadow:0 0 6px var(--cyan);animation:dock-dot 1.2s ease-in-out infinite}
@@ -775,6 +775,8 @@ function App(){
   ]);
   const [thinking,setThinking]=React.useState(false);
   const [presence,setPresence]=React.useState("atlas");
+  const [alarmeAtivo,setAlarmeAtivo]=React.useState(null);
+  const [voiceEnabled,setVoiceEnabled]=React.useState(true);
   const inputRef=React.useRef(null);
 
   React.useEffect(()=>{
@@ -795,12 +797,88 @@ function App(){
     return()=>clearInterval(id);
   },[]);
 
+  // Ref para ler voiceMode atual dentro do setInterval sem closure stale
+  const tRef=React.useRef(t);
+  React.useEffect(()=>{ tRef.current=t; },[t]);
+
+  // Ref para ler alarmeAtivo atual dentro do setInterval sem closure stale
+  const alarmeAtivoRef=React.useRef(null);
+  React.useEffect(()=>{ alarmeAtivoRef.current=alarmeAtivo; },[alarmeAtivo]);
+  const voiceEnabledRef=React.useRef(true);
+  React.useEffect(()=>{ voiceEnabledRef.current=voiceEnabled; },[voiceEnabled]);
+  const presenceRef=React.useRef(presence);
+  React.useEffect(()=>{ presenceRef.current=presence; },[presence]);
+
+  React.useEffect(()=>{
+    const verificar=async()=>{
+      try{
+        const res=await fetch("http://127.0.0.1:8000/alarmes/verificar",{method:"POST"});
+        if(!res.ok)return;
+        const data=await res.json();
+        if(!data.disparados||!data.disparados.length)return;
+        for(const alarme of data.disparados){
+          const hm=String(alarme.horario||"").slice(11,16);
+          const texto=`JP, são ${hm}. ${alarme.mensagem}.`;
+          setMessages(m=>[...m,{from:presenceRef.current,text:texto}]);
+          if(voiceEnabledRef.current&&tRef.current.voiceMode!=="idle"){
+            fetch("http://127.0.0.1:8000/voz/falar",{
+              method:"POST",
+              headers:{"Content-Type":"application/json"},
+              body:JSON.stringify({texto,presence:presenceRef.current}),
+            }).catch(()=>{});
+          }
+          if(!alarmeAtivoRef.current) setAlarmeAtivo(alarme);
+        }
+      }catch(e){}
+    };
+    const id=setInterval(verificar,15000);
+    return()=>clearInterval(id);
+  },[]);
+
+  React.useEffect(()=>{
+    if(!alarmeAtivo)return;
+    const hm=String(alarmeAtivo.horario||"").slice(11,16);
+    const msg=alarmeAtivo.mensagem||"Alarme";
+    const frases=[
+      ()=>`JP, ainda esperando. São ${hm}.`,
+      ()=>`JP, hora de acordar. ${msg}.`,
+      ()=>`JP, ${hm}. Você pediu para acordar.`,
+    ];
+    const id=setInterval(()=>{
+      const texto=frases[Math.floor(Math.random()*frases.length)]();
+      setMessages(m=>[...m,{from:presenceRef.current,text:texto}]);
+      if(voiceEnabledRef.current&&tRef.current.voiceMode!=="idle"){
+        fetch("http://127.0.0.1:8000/voz/falar",{
+          method:"POST",
+          headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({texto,presence:presenceRef.current}),
+        }).catch(()=>{});
+      }
+    },20000);
+    return()=>clearInterval(id);
+  },[alarmeAtivo]);
+
+  const _CONFIRMA=/acordei|pode parar|cancelar|entendido|\bsim\b|\bok\b|\bpronto\b/i;
+
   const send=async()=>{
     const v=chat.trim();
     if(!v)return;
     const from=presence;
     setMessages(m=>[...m,{from:"you",text:v}]);
     setChat("");
+    if(alarmeAtivo&&_CONFIRMA.test(v)){
+      setAlarmeAtivo(null);
+      const despedida="Alarme encerrado. Bom dia, JP.";
+      setMessages(m=>[...m,{from:presence,text:despedida}]);
+      if(voiceEnabled){
+        fetch("http://127.0.0.1:8000/voz/falar",{
+          method:"POST",
+          headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({texto:despedida,presence}),
+        }).catch(()=>{});
+      }
+      return;
+    }
     // Núcleo → PROCESSANDO
     setThinking(true);
     setTweak("voiceMode","thinking");
@@ -812,7 +890,15 @@ function App(){
       });
       if(!res.ok) throw new Error("API error");
       const data=await res.json();
+      // alarme_criado != null → confirmação já embutida em data.resposta; sem msg extra
       setMessages(m=>[...m,{from,text:data.resposta}]);
+      if(voiceEnabledRef.current){
+        fetch("http://127.0.0.1:8000/voz/falar",{
+          method:"POST",
+          headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({texto:data.resposta,presence:from}),
+        }).catch(()=>{});
+      }
       if(data.latencia_ms!==undefined) setLatencia(data.latencia_ms);
       // Núcleo → FALANDO por 2s, depois OUVINDO
       setTweak("voiceMode","speaking");
@@ -848,6 +934,13 @@ function App(){
             body:JSON.stringify({texto:data.texto}),
           }).then(r=>r.json()).then(d=>{
             setMessages(m=>[...m,{from:presence,text:d.resposta}]);
+            if(voiceEnabledRef.current){
+              fetch("http://127.0.0.1:8000/voz/falar",{
+                method:"POST",
+                headers:{"Content-Type":"application/json"},
+                body:JSON.stringify({texto:d.resposta,presence}),
+              }).catch(()=>{});
+            }
             if(d.latencia_ms!==undefined)setLatencia(d.latencia_ms);
             setTweak("voiceMode","speaking");
             setTimeout(()=>setTweak("voiceMode","listening"),2000);
@@ -977,6 +1070,10 @@ function App(){
               <rect x="9" y="3" width="6" height="12" rx="3"/>
               <path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>
             </svg>
+          </button>
+          <button className="dock-icon" title={voiceEnabled?"Silenciar áudio":"Ativar áudio"} onClick={()=>setVoiceEnabled(v=>!v)}
+            style={{background:!voiceEnabled?"rgba(255,80,80,.15)":"",borderColor:!voiceEnabled?"rgba(255,80,80,.55)":"",boxShadow:!voiceEnabled?"0 0 14px rgba(255,80,80,.35)":""}}>
+            <span style={{fontSize:16,lineHeight:1,userSelect:"none"}}>{voiceEnabled?"🔊":"🔇"}</span>
           </button>
           <span className="dock-prompt" style={{color:thinking?presence==="lyra"?"var(--lyra)":"var(--cyan)":"var(--cyan)"}}>›</span>
           {thinking

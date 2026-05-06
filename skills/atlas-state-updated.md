@@ -21,22 +21,24 @@ description: Skill do projeto Atlas Voice. Use SEMPRE que o JP (João Paulo) ini
 
 ---
 
-## Última Sessão — 01/05/2026
+## Última Sessão — 01/05/2026 (noite)
 
 ### O que foi feito
 
-1. Dashboard HTML completo com núcleo animado (brasas, anéis orbitais, partículas)
-2. FastAPI (`api.py`) conectando dashboard ao backend Python
-3. Atlas e Lyra com IA real (Claude Haiku) e personalidades distintas
-4. Memória de sessão — últimas 10 trocas como contexto para a IA
-5. Memória persistente — `data/memoria_sessao.json` carregado ao reiniciar
-6. Sessão viva — contador real de tempo e mensagens no painel
-7. Latência real — painel mostra ms reais de cada resposta
-8. Núcleo reativo — PROCESSANDO → FALANDO → OUVINDO conforme o chat
-9. Título reativo — ATLAS/LYRA com cor e nome corretos conforme presença
-10. Pontos no dock — animação de espera durante processamento
-11. Microfone conectado — Whisper + VAD transcreve e envia automaticamente
-12. Endpoint `/alarme` conectado ao módulo de alarmes
+1. FastAPI completa com todos os endpoints operantes
+2. Atlas e Lyra com IA real (Claude Haiku) e personalidades distintas
+3. Atlas conhece a Lyra como parceira — system prompt atualizado
+4. Memória de sessão + persistência em `data/memoria_sessao.json`
+5. Sessão viva — contador real de tempo e mensagens
+6. Latência real no painel
+7. Núcleo reativo — PROCESSANDO → FALANDO → OUVINDO
+8. Título ATLAS/LYRA reativo com cor e nome corretos
+9. Pontos animados no dock durante espera
+10. Microfone conectado — Whisper + VAD transcreve e envia automaticamente
+11. ElevenLabs conectado — botão de voz no dock, Atlas e Lyra falam após responder
+12. Alarmes — endpoint `/alarme` existe e salva no JSON, mas IA ainda não chama automaticamente
+13. Verificação de alarmes a cada 30s no dashboard
+14. Roadmap 1.0 criado — 9 degraus até o fechamento (`skills/atlas-roadmap/SKILL.md`)
 
 ### Como rodar
 
@@ -46,17 +48,56 @@ conda activate atlasvoice
 cd C:\Users\Gleida\Desktop\atlas-voice-v1
 uvicorn api:app --reload --port 8000
 
-# Browser — abrir atlas_dashboard.html
+# Browser — abrir da pasta do projeto
+C:\Users\Gleida\Desktop\atlas-voice-v1\atlas_dashboard.html
 ```
 
 ---
 
-## Próximo Passo
+## Próximo Passo — Degrau 1 do Roadmap
 
-**Integrar módulos reais ao Atlas via API** — módulo por módulo:
-- Alarmes reais disparando (endpoint existe, testar execução)
-- Lembretes com horário
-- ElevenLabs no dashboard — Atlas/Lyra falam em voz
+**Alarmes reais via IA** — quando o usuário pede um alarme, a IA confirma em texto mas não chama o endpoint `/alarme`. O JSON fica vazio.
+
+**O que precisa ser feito:**
+- Detectar intenção de alarme na resposta da IA
+- Extrair horário e descrição
+- Chamar `/alarme` automaticamente com os dados
+- Atlas confirma que foi salvo de verdade
+
+**Critério de conclusão:** "me acorda às 21h" → aparece no `alarmes.json` → dispara em voz no horário.
+
+---
+
+## Endpoints da API
+
+| Endpoint | Método | Função |
+|---|---|---|
+| `/` | GET | Status da API |
+| `/chat/atlas` | POST | Chat com Atlas (IA real) |
+| `/chat/lyra` | POST | Chat com Lyra (IA real) |
+| `/voz/ouvir` | POST | Microfone → Whisper → texto |
+| `/voz/falar` | POST | Texto → ElevenLabs → áudio |
+| `/alarme` | POST | Criar alarme no JSON |
+| `/alarmes` | GET | Listar alarmes ativos |
+| `/alarmes/verificar` | POST | Disparar alarmes no horário |
+| `/sessao` | GET | Dados da sessão atual |
+| `/sessao/resetar` | POST | Limpar histórico |
+
+---
+
+## Roadmap 1.0 — 9 Degraus
+
+| Degrau | Status |
+|---|---|
+| 1 — Alarmes reais via IA | 🔜 PRÓXIMO |
+| 2 — Lembretes reais via IA | 🔜 |
+| 3 — Loop de verificação no backend | 🔜 |
+| 4 — Memória de longo prazo real | 🔜 |
+| 5 — Lyra integrada com Atlas | 🔜 |
+| 6 — Dashboard na pasta do projeto | 🔜 |
+| 7 — Script iniciar.bat | 🔜 |
+| 8 — Testes de uso real + correções | 🔜 |
+| 9 — Documentação + tag v1.0 | 🔜 |
 
 ---
 
@@ -65,27 +106,20 @@ uvicorn api:app --reload --port 8000
 | Funcionalidade | Status |
 |---|---|
 | Atlas + Lyra com IA real | ✅ |
+| Atlas conhece Lyra como parceira | ✅ |
 | Dashboard completo + backend integrado | ✅ |
 | Memória persistente entre sessões | ✅ |
 | Microfone (Whisper + VAD) no dashboard | ✅ |
+| ElevenLabs no dashboard (voz ON/OFF) | ✅ |
 | Latência real, sessão viva, núcleo reativo | ✅ |
-| Módulos reais via API (alarmes, lembretes) | 🔜 |
-| ElevenLabs no dashboard (voz de saída) | 🔜 |
-| Android (V4) | Futuro |
+| Alarmes endpoint funcionando | ✅ |
+| Alarmes via IA (extração automática) | 🔜 Degrau 1 |
+| Lembretes via IA | 🔜 Degrau 2 |
+| Loop de verificação backend | 🔜 Degrau 3 |
+| Script iniciar.bat | 🔜 Degrau 7 |
+| Android (V2.0) | Futuro |
 
 ---
 
-## Roadmap
-
-| Fase | Status |
-|---|---|
-| V1-V3.2 — Fundação + IA + Voz | ✅ |
-| Dashboard completo + FastAPI | ✅ |
-| Módulos reais via API | 🔜 |
-| V4 — Android | Futuro |
-| V5 — Ecossistema IoT | Futuro |
-
----
-
-*Atlas Voice — JP Silva — Manaus, Brasil*  
-*Atualizado: 01/05/2026 — 19:35*
+*Atlas Voice — JP Silva — Manaus, Brasil*
+*Atualizado: 01/05/2026 — 20:50*

@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Atlas Voice — Segurança por Versão</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;600;700&family=Share+Tech+Mono&family=Exo+2:wght@200;400;700&display=swap');
+
+  :root {
+    --bg: #060a0e;
+    --white: #e8f0ff;
+    --dim: #3a5a6a;
+    --border: rgba(0,200,255,0.1);
+    --card: rgba(0,200,255,0.03);
+
+    --v1c: #00ff88;
+    --v2c: #00c8ff;
+    --v3c: #f5c542;
+    --v4c: #ff8c00;
+    --v5c: #ff3a3a;
+    --v6c: #cc66ff;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--white);
+    font-family: 'Exo 2', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(0,200,255,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,200,255,0.02) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none; z-index: 0;
+  }
+
+  .container {
+    max-width: 940px;
+    margin: 0 auto;
+    padding: 60px 24px 80px;
+    position: relative; z-index: 1;
+  }
+
+  /* HEADER */
+  .header { text-align: center; margin-bottom: 68px; }
+
+  .logo-line {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px; color: #ff3a3a;
+    letter-spacing: 5px; margin-bottom: 16px; opacity: 0.6;
+  }
+
+  .title {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: clamp(38px, 8vw, 72px);
+    font-weight: 700; letter-spacing: 8px; line-height: 1;
+    background: linear-gradient(135deg, #ff3a3a 0%, #ffffff 50%, #ff8c00 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+
+  .subtitle {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 14px; font-weight: 300;
+    color: var(--dim); letter-spacing: 6px; margin-top: 8px;
+  }
+
+  .tagline {
+    margin-top: 22px; font-size: 14px;
+    color: #ff8c00; font-style: italic; opacity: 0.8;
+  }
+
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 52px 0;
+  }
+
+  /* INTRO PRINCÍPIO */
+  .principle {
+    border-left: 3px solid #ff8c00;
+    padding: 14px 22px;
+    margin-bottom: 48px;
+    font-size: 14px;
+    color: #ff8c00;
+    font-style: italic;
+    opacity: 0.85;
+    background: rgba(255,140,0,0.03);
+    border-radius: 0 4px 4px 0;
+  }
+
+  /* VERSÃO BLOCK */
+  .version-block {
+    margin-bottom: 48px;
+  }
+
+  .version-header {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 20px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .version-tag {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    line-height: 1;
+  }
+
+  .version-info {}
+
+  .version-name {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    color: var(--white);
+    margin-bottom: 2px;
+  }
+
+  .version-desc {
+    font-size: 12px;
+    color: var(--dim);
+    letter-spacing: 1px;
+  }
+
+  .badge {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    padding: 3px 9px;
+    border-radius: 2px;
+    margin-left: auto;
+    white-space: nowrap;
+  }
+
+  /* MÓDULO DE SEGURANÇA */
+  .sec-module {
+    border-radius: 4px;
+    padding: 18px 22px;
+    margin-bottom: 10px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  .sec-module::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px; height: 100%;
+  }
+
+  .mod-icon {
+    font-size: 22px;
+    min-width: 32px;
+    margin-top: 2px;
+  }
+
+  .mod-body {}
+
+  .mod-tag {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 3px;
+    margin-bottom: 5px;
+    opacity: 0.7;
+  }
+
+  .mod-name {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: var(--white);
+    margin-bottom: 6px;
+  }
+
+  .mod-desc {
+    font-size: 13px;
+    line-height: 1.65;
+    margin-bottom: 10px;
+  }
+
+  .mod-items {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .mod-items li {
+    font-size: 12px;
+    padding: 6px 10px;
+    border-radius: 3px;
+    display: flex;
+    gap: 8px;
+    line-height: 1.4;
+  }
+
+  .mod-items li::before {
+    content: '▸';
+    font-size: 11px;
+    opacity: 0.5;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* POR VERSÃO — CORES */
+
+  /* V1 — verde */
+  .v1 .version-tag { color: var(--v1c); }
+  .v1 .sec-module { background: rgba(0,255,136,0.03); border: 1px solid rgba(0,255,136,0.12); }
+  .v1 .sec-module::before { background: var(--v1c); opacity: 0.3; }
+  .v1 .mod-tag { color: var(--v1c); }
+  .v1 .mod-desc { color: #407858; }
+  .v1 .mod-items li { background: rgba(0,255,136,0.03); border: 1px solid rgba(0,255,136,0.07); color: #508068; }
+  .v1 .mod-items li::before { color: var(--v1c); }
+  .v1 .badge { background: rgba(0,255,136,0.1); color: var(--v1c); border: 1px solid rgba(0,255,136,0.3); }
+
+  /* V2 — azul */
+  .v2 .version-tag { color: var(--v2c); }
+  .v2 .sec-module { background: rgba(0,200,255,0.03); border: 1px solid rgba(0,200,255,0.12); }
+  .v2 .sec-module::before { background: var(--v2c); opacity: 0.3; }
+  .v2 .mod-tag { color: var(--v2c); }
+  .v2 .mod-desc { color: #3a6880; }
+  .v2 .mod-items li { background: rgba(0,200,255,0.03); border: 1px solid rgba(0,200,255,0.07); color: #4a7890; }
+  .v2 .mod-items li::before { color: var(--v2c); }
+  .v2 .badge { background: rgba(0,200,255,0.1); color: var(--v2c); border: 1px solid rgba(0,200,255,0.3); }
+
+  /* V3 — dourado */
+  .v3 .version-tag { color: var(--v3c); }
+  .v3 .sec-module { background: rgba(245,197,66,0.03); border: 1px solid rgba(245,197,66,0.12); }
+  .v3 .sec-module::before { background: var(--v3c); opacity: 0.3; }
+  .v3 .mod-tag { color: var(--v3c); }
+  .v3 .mod-desc { color: #706030; }
+  .v3 .mod-items li { background: rgba(245,197,66,0.03); border: 1px solid rgba(245,197,66,0.07); color: #806840; }
+  .v3 .mod-items li::before { color: var(--v3c); }
+  .v3 .badge { background: rgba(245,197,66,0.1); color: var(--v3c); border: 1px solid rgba(245,197,66,0.3); }
+
+  /* V4 — laranja */
+  .v4 .version-tag { color: var(--v4c); }
+  .v4 .sec-module { background: rgba(255,140,0,0.03); border: 1px solid rgba(255,140,0,0.12); }
+  .v4 .sec-module::before { background: var(--v4c); opacity: 0.3; }
+  .v4 .mod-tag { color: var(--v4c); }
+  .v4 .mod-desc { color: #705028; }
+  .v4 .mod-items li { background: rgba(255,140,0,0.03); border: 1px solid rgba(255,140,0,0.07); color: #806030; }
+  .v4 .mod-items li::before { color: var(--v4c); }
+  .v4 .badge { background: rgba(255,140,0,0.1); color: var(--v4c); border: 1px solid rgba(255,140,0,0.3); }
+
+  /* V5 — vermelho */
+  .v5 .version-tag { color: var(--v5c); }
+  .v5 .sec-module { background: rgba(255,58,58,0.03); border: 1px solid rgba(255,58,58,0.12); }
+  .v5 .sec-module::before { background: var(--v5c); opacity: 0.3; }
+  .v5 .mod-tag { color: var(--v5c); }
+  .v5 .mod-desc { color: #703030; }
+  .v5 .mod-items li { background: rgba(255,58,58,0.03); border: 1px solid rgba(255,58,58,0.07); color: #804040; }
+  .v5 .mod-items li::before { color: var(--v5c); }
+  .v5 .badge { background: rgba(255,58,58,0.1); color: var(--v5c); border: 1px solid rgba(255,58,58,0.3); }
+
+  /* V6 — roxo */
+  .v6 .version-tag { color: var(--v6c); }
+  .v6 .sec-module { background: rgba(204,102,255,0.03); border: 1px solid rgba(204,102,255,0.12); }
+  .v6 .sec-module::before { background: var(--v6c); opacity: 0.3; }
+  .v6 .mod-tag { color: var(--v6c); }
+  .v6 .mod-desc { color: #5a3870; }
+  .v6 .mod-items li { background: rgba(204,102,255,0.03); border: 1px solid rgba(204,102,255,0.07); color: #6a4880; }
+  .v6 .mod-items li::before { color: var(--v6c); }
+  .v6 .badge { background: rgba(204,102,255,0.1); color: var(--v6c); border: 1px solid rgba(204,102,255,0.3); }
+
+  /* MAPA VISUAL */
+  .map-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+    margin-bottom: 48px;
+  }
+
+  @media (max-width: 600px) {
+    .map-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  .map-cell {
+    border-radius: 4px;
+    padding: 14px 10px;
+    text-align: center;
+    border: 1px solid;
+  }
+
+  .map-cell .mc-v {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  .map-cell .mc-d {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    opacity: 0.6;
+    margin-bottom: 4px;
+  }
+
+  .map-cell .mc-name {
+    font-size: 10px;
+    color: #4a6a7a;
+    line-height: 1.3;
+  }
+
+  /* FOOTER */
+  .footer {
+    text-align: center;
+    margin-top: 72px;
+    padding-top: 32px;
+    border-top: 1px solid var(--border);
+  }
+
+  .footer p {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--dim);
+    letter-spacing: 3px;
+    line-height: 2.2;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo-line">// DOCUMENTO ESTRATÉGICO — CONFIDENCIAL</div>
+    <div class="title">ATLAS SHIELD</div>
+    <div class="subtitle">MAPA DE SEGURANÇA POR VERSÃO</div>
+    <div class="tagline">"Cada versão nasce com sua própria armadura."</div>
+  </div>
+
+  <!-- PRINCÍPIO -->
+  <div class="principle">
+    Princípio: a defesa não é uma fase separada — ela é parte do DNA de cada versão. Cada módulo de segurança entra junto com a funcionalidade que ele protege. Nunca depois.
+  </div>
+
+  <!-- MAPA VISUAL -->
+  <div style="margin-bottom:16px;">
+    <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#3a5a6a;letter-spacing:4px;margin-bottom:14px;">// VISÃO GERAL — DEFESA POR VERSÃO</div>
+  </div>
+
+  <div class="map-grid">
+    <div class="map-cell" style="background:rgba(0,255,136,0.04);border-color:rgba(0,255,136,0.2);">
+      <div class="mc-v" style="color:var(--v1c);">V1</div>
+      <div class="mc-d" style="color:var(--v1c);">D1</div>
+      <div class="mc-name">Abstração de IA + fallback</div>
+    </div>
+    <div class="map-cell" style="background:rgba(0,200,255,0.04);border-color:rgba(0,200,255,0.2);">
+      <div class="mc-v" style="color:var(--v2c);">V2</div>
+      <div class="mc-d" style="color:var(--v2c);">D1+D2</div>
+      <div class="mc-name">Offline + múltiplos provedores</div>
+    </div>
+    <div class="map-cell" style="background:rgba(245,197,66,0.04);border-color:rgba(245,197,66,0.2);">
+      <div class="mc-v" style="color:var(--v3c);">V3</div>
+      <div class="mc-d" style="color:var(--v3c);">D2+D3</div>
+      <div class="mc-name">Servidor BR + voz local</div>
+    </div>
+    <div class="map-cell" style="background:rgba(255,140,0,0.04);border-color:rgba(255,140,0,0.2);">
+      <div class="mc-v" style="color:var(--v4c);">V4</div>
+      <div class="mc-d" style="color:var(--v4c);">D3+D4</div>
+      <div class="mc-name">Infra própria + open source</div>
+    </div>
+    <div class="map-cell" style="background:rgba(255,58,58,0.04);border-color:rgba(255,58,58,0.2);">
+      <div class="mc-v" style="color:var(--v5c);">V5</div>
+      <div class="mc-d" style="color:var(--v5c);">D4+D5</div>
+      <div class="mc-name">Comunidade + modelo próprio</div>
+    </div>
+    <div class="map-cell" style="background:rgba(204,102,255,0.04);border-color:rgba(204,102,255,0.2);">
+      <div class="mc-v" style="color:var(--v6c);">V6</div>
+      <div class="mc-d" style="color:var(--v6c);">D5+</div>
+      <div class="mc-name">Soberania total — IA brasileira</div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- V1 -->
+  <div class="version-block v1">
+    <div class="version-header">
+      <div class="version-tag">V1</div>
+      <div class="version-info">
+        <div class="version-name">FUNDAÇÃO — CLI + Dashboard + FastAPI</div>
+        <div class="version-desc">Estado atual — V3.2 em validação</div>
+      </div>
+      <div class="badge">● ATIVO AGORA</div>
+    </div>
+
+    <div class="sec-module">
+      <div class="mod-icon">🔀</div>
+      <div class="mod-body">
+        <div class="mod-tag">// MÓDULO D1 — ABSTRAÇÃO DE IA</div>
+        <div class="mod-name">motor_ia.py — Camada de Abstração</div>
+        <div class="mod-desc">Atlas e Lyra nunca chamam Claude diretamente. Chamam motor_ia() — que decide qual provedor usar. Um único arquivo protege todo o sistema contra corte de API.</div>
+        <ul class="mod-items">
+          <li>Criar pipeline/motor_ia.py com função central responder()</li>
+          <li>Provedor primário: Claude Haiku — já em uso</li>
+          <li>Provedor fallback: configurado mas em standby</li>
+          <li>Se primário falha → fallback assume automaticamente, sem o sistema parar</li>
+          <li>Atlas e Lyra refatorados para chamar motor_ia() — não a API diretamente</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="sec-module">
+      <div class="mod-icon">🔐</div>
+      <div class="mod-body">
+        <div class="mod-tag">// MÓDULO — SEGURANÇA DE DADOS</div>
+        <div class="mod-name">Proteção Local de Dados do Usuário</div>
+        <div class="mod-desc">Senhas com bcrypt, dados em JSON local, nenhuma informação pessoal enviada a terceiros sem necessidade.</div>
+        <ul class="mod-items">
+          <li>bcrypt já ativo para senhas</li>
+          <li>JSONs de memória ficam apenas no dispositivo do usuário</li>
+          <li>Nenhum dado de conversa enviado a analytics externos</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- V2 -->
+  <div class="version-block v2">
+    <div class="version-header">
+      <div class="version-tag">V2</div>
+      <div class="version-info">
+        <div class="version-name">INTELIGÊNCIA — IA Avançada + Busca Web</div>
+        <div class="version-desc">Próxima fase — após fechar os 9 degraus do V1</div>
+      </div>
+      <div class="badge">◎ PRÓXIMO</div>
+    </div>
+
+    <div class="sec-module">
+      <div class="mod-icon">🌐</div>
+      <div class="mod-body">
+        <div class="mod-tag">// MÓDULO D1 EXPANDIDO — MULTI-PROVEDOR</div>
+        <div class="mod-name">Fallback Ativo com Segundo Provedor Real</div>
+        <div class="mod-desc">No V2 o fallback deixa de ser standby e entra em produção real. O sistema alterna automaticamente entre provedores conforme disponibilidade e custo.</div>
+        <ul class="mod-items">
+          <li>Segundo provedor ativo — OpenAI GPT-4o mini ou Groq</li>
+          <li>Lógica de seleção: tenta Claude → se falha ou lento → usa fallback</li>
+          <li>Log de uso por provedor — JP sabe quanto cada um custa por mês</li>
+          <li>Configuração via config.py — trocar provedor sem mexer no código</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="sec-module">
+      <div class="mod-icon">📡</div>
+      <div class="mod-body">
+        <div class="mod-tag">// MÓDULO D2 INÍCIO — MODO ESSENCIAL OFFLINE</div>
+        <div class="mod-name">Atlas Essencial — Funciona Sem Internet</div>
+        <div class="mod-desc">Funções críticas do Atlas não podem depender de internet. Alarmes, lembretes e respostas básicas funcionam mesmo offline.</div>
+        <ul class="mod-items">
+          <li>Alarmes e lembretes 100% locais — nunca dependem de API</li>
+          <li>Respostas padrão offline — Atlas avisa que está sem conexão mas continua operando</li>
+          <li>Whisper local — transcrição de voz sem enviar áudio para nenhum servidor</li>
+          <li>Modo offline declarado no dashboard — usuário sabe o status</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="sec-module">
+      <div class="mod-icon">🔍</div>
+      <div class="mod-body">
+        <div class="mod-tag">// MÓDULO — BUSCA WEB SEGURA</div>
+        <div class="mod-name">Integração de Busca com Controle de Fonte</div>
+        <div class="mod-desc">Quando o Atlas busca informações na web, ele filtra e controla de onde vêm os dados — sem expor o usuário a fontes não confiáveis.</div>
+        <ul class="mod-items">
+          <li>API de busca com fallback — se uma fonte falha, usa outra</li>
+          <li>Resultados sempre processados pela IA antes de chegarem ao usuário</li>
+          <li>Nenhuma busca revela dados pessoais do usuário para serviços externos</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- V3 -->
+  <div class="version-block v3">
+    <div class="version-header">
+      <div class="version-tag">V3</div>
+      <div class="version-info">
+        <div class="version-name">MOBILE — Android + Voz Contínua</div>
+        <div class="version-desc">App Android nativo com ativação por voz permanente</div>
+      </div>
+      <div class="badge">○ FUTURO</div>
+    </div>
+
+    <div class="sec-module">
+      <div class="mod-icon">🤖</div>
+      <div class="mod-body">
+        <div class="mod-tag">// MÓDULO D2 COMPLETO — IA LOCAL NO DISPOSITIVO</div>
+        <div class="mod-name">Modelo de IA Rodando no Android</div>
+        <div class="mod-desc">Um modelo leve de IA roda diretamente no celular. Sem internet, sem servidor, sem depender de ninguém. Isso é a independência real no mobile.</div>
+        <ul class="mod-items">
+          <li>Modelo quantizado — Llama 3 8B ou Mistral 7B otimizado para Android</li>
+          <li>Whisper tiny/base rodando local — transcrição offline no celular</li>
+          <li>TTS local — voz básica mesmo sem ElevenLabs</li>
+          <li>Hierarquia: IA local → API Claude → fallback OpenAI</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="sec-module">
+      <div class="mod-icon">🛡️</div>
+      <div class="mod-body">
+        <div class="mod-tag">// MÓDULO — SEGURANÇA MOBILE</div>
+        <div class="mod-name">Proteção do App no Android</div>
+        <div class="mod-desc">O app Atlas no celular precisa de camadas específicas de proteção — contra acesso indevido e contra remoção forçada.</div>
+        <ul class="mod-items">
+          <li>Ativação por voz com autenticação — só o usuário cadastrado ativa o Atlas</li>
+          <li>Dados criptografados no dispositivo — sem acesso por outros apps</li>
+          <li>Permissões mínimas — Atlas pede só o que realmente precisa</li>
+          <li>Backup automático local — dados nunca perdidos por falha do app</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="sec-module">
+      <div class="mod-icon">🇧🇷</div>
+      <div class="mod-body">
+        <div class="mod-tag">// MÓDULO D3 INÍCIO — SERVIDOR BRASILEIRO</div>
+        <div class="mod-name">Infraestrutura com Ancoragem no Brasil</div>
+        <div class="mod-desc">Com o V3 chegando a usuários reais, os dados precisam de ancoragem nacional. Começa a migração para infraestrutura em solo brasileiro.</div>
+        <ul class="mod-items">
+          <li>API hospedada em servidor na região São Paulo — AWS ou equivalente</li>
+          <li>Dados de memória do usuário armazenados no Brasil</li>
+          <li>Conformidade LGPD — política de dados clara e aplicada</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- V4 -->
+  <div class="version-block v4">
+    <div class="version-header">
+      <div class="version-tag">V4</div>
+      <div class="version-info">
+        <div class="version-name">ECOSSISTEMA — IoT + WhatsApp + Saúde</div>
+        <div class="version-desc">Atlas no centro de controle da vida digital e física</div>
+      </div>
+      <div class="badge">○ FUTURO</div>
+    </div>
+
+    <div class="sec-module">
+      <div class="mod-icon">🏗️</div>
+      <div class="mod-body">
+        <div class="mod-tag">// MÓDULO D3 COMPLETO — INFRAESTRUTURA PRÓPRIA</div>
+        <div class="mod-name">Servidor Próprio — Independência de Big Cloud</div>
+        <div class="mod-desc">Com escala de usuários, o Atlas migra para infraestrutura própria. Não depende mais de AWS, Google Cloud ou Azure para existir.</div>
+        <ul class="mod-items">
+          <li>Servidores próprios no Brasil — colocação em datacenter nacional</li>
+          <li>Fine-tuning de modelos open source com dados brasileiros</li>
+          <li>CDN própria — distribuição sem depender de infraestrutura estrangeira</li>
+          <li>Plano de contingência — se datacenter principal cai, outro assume</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="sec-module">
+      <div class="mod-icon">🔓</div>
+      <div class="mod-body">
+        <div class="mod-tag">// MÓDULO D4 INÍCIO — ABERTURA ESTRATÉGICA</div>
+        <div class="mod-name">Núcleo Open Source — Proteção pela Comunidade</div>
+        <div class="mod-desc">Partes do Atlas são abertas para a comunidade de desenvolvedores. O que está nas mãos de muitos não pode ser bloqueado.</div>
+        <ul class="mod-items">
+          <li>Pipeline de voz open source publicado no GitHub</li>
+          <li>Documentação técnica completa — qualquer dev brasileiro contribui</li>
+          <li>Licença estratégica — livre para uso pessoal, comercial protegido</li>
+          <li>Comunidade de contribuidores como camada de defesa ativa</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="sec-module">
+      <div class="mod-icon">🔒</div>
+      <div class="mod-body">
+        <div class="mod-tag">// MÓDULO — SEGURANÇA DE ECOSSISTEMA</div>
+        <div class="mod-name">Proteção nas Integrações Externas</div>
+        <div class="mod-desc">WhatsApp, IoT, saúde — cada integração nova é uma porta de entrada. Cada porta precisa de trava.</div>
+        <ul class="mod-items">
+          <li>Autenticação OAuth para integrações com apps externos</li>
+          <li>Sandboxing de dispositivos IoT — falha de um não afeta o sistema todo</li>
+          <li>Dados de saúde com criptografia reforçada — nunca compartilhados sem consentimento explícito</li>
+          <li>Auditoria de permissões — usuário vê e controla tudo que o Atlas pode acessar</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- V5 -->
+  <div class="version-block v5">
+    <div class="version-header">
+      <div class="version-tag">V5</div>
+      <div class="version-info">
+        <div class="version-name">ESCALA NACIONAL — Produto Público</div>
+        <div class="version-desc">Atlas disponível para qualquer brasileiro</div>
+      </div>
+      <div class="badge">○ FUTURO</div>
+    </div>
+
+    <div class="sec-module">
+      <div class="mod-icon">👥</div>
+      <div class="mod-body">
+        <div class="mod-tag">// MÓDULO D4 COMPLETO — ESCUDO DA COMUNIDADE</div>
+        <div class="mod-name">Milhares de Usuários como Proteção Real</div>
+        <div class="mod-desc">Com escala nacional, tentar bloquear o Atlas tem custo político e social enorme. A adoção em massa é a defesa mais poderosa que existe.</div>
+        <ul class="mod-items">
+          <li>Meta: 100k usuários ativos — ponto de irreversibilidade</li>
+          <li>Narrativa pública de soberania — produto brasileiro de IA</li>
+          <li>Parcerias com governo, educação e segurança pública</li>
+          <li>Programa de embaixadores — usuários que defendem o Atlas ativamente</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="sec-module">
+      <div class="mod-icon">🧠</div>
+      <div class="mod-body">
+        <div class="mod-tag">// MÓDULO D5 INÍCIO — MODELO PRÓPRIO</div>
+        <div class="mod-name">Atlas Model — Primeira IA de Voz Brasileira</div>
+        <div class="mod-desc">O Atlas começa a treinar seu próprio modelo de linguagem — em português, com cultura brasileira, controlado pelo projeto.</div>
+        <ul class="mod-items">
+          <li>Parceria com universidades — UFAM, USP, UNICAMP</li>
+          <li>Dataset em português brasileiro coletado com consentimento dos usuários</li>
+          <li>Financiamento — BNDES, FINEP, editais de inovação</li>
+          <li>Primeiro modelo leve próprio — substitui fallback externo</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- V6 -->
+  <div class="version-block v6">
+    <div class="version-header">
+      <div class="version-tag">V6</div>
+      <div class="version-info">
+        <div class="version-name">PRESENÇA TOTAL — Soberania Completa</div>
+        <div class="version-desc">Multi-dispositivo, robótica, IA própria — independência total</div>
+      </div>
+      <div class="badge">○ VISÃO</div>
+    </div>
+
+    <div class="sec-module">
+      <div class="mod-icon">⚡</div>
+      <div class="mod-body">
+        <div class="mod-tag">// MÓDULO D5 COMPLETO — SOBERANIA TOTAL</div>
+        <div class="mod-name">Atlas Independente — Nenhuma Dependência Externa Crítica</div>
+        <div class="mod-desc">O Atlas V6 não depende de nenhuma empresa estrangeira para existir. IA própria, infraestrutura própria, comunidade própria. Soberania tecnológica completa.</div>
+        <ul class="mod-items">
+          <li>Atlas Model completo — IA brasileira treinada e controlada pelo projeto</li>
+          <li>Zero dependência crítica de APIs externas — tudo tem substituto próprio</li>
+          <li>Infraestrutura distribuída — sem ponto único de falha no país</li>
+          <li>Presença em múltiplos dispositivos — celular, PC, casa, carro</li>
+          <li>Exportação para outros países — Atlas como produto global de origem brasileira</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- RESUMO FINAL -->
+  <div style="margin-bottom:8px;">
+    <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#3a5a6a;letter-spacing:4px;margin-bottom:20px;">// RESUMO — REGRA DE OURO</div>
+    <div style="border-left:3px solid #ff8c00;padding:14px 22px;background:rgba(255,140,0,0.03);border-radius:0 4px 4px 0;font-size:14px;color:#ff8c00;font-style:italic;line-height:1.7;">
+      Cada versão herda 100% da segurança das anteriores e adiciona sua própria camada.<br>
+      Nenhuma versão nasce sem defesa. Nenhum módulo de proteção é opcional.<br>
+      A segurança cresce junto com o produto — nunca depois.
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <p>ATLAS VOICE — ATLAS SHIELD — MAPA DE SEGURANÇA POR VERSÃO</p>
+    <p>JP SILVA — MANAUS, BRASIL — CONFIDENCIAL</p>
+    <p>ATUALIZADO: MAIO 2026</p>
+    <p>PROPÓSITO · COMPROMISSO · FOCO · DESTREZA</p>
+  </div>
+
+</div>
+</body>
+</html>

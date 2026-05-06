@@ -8,12 +8,14 @@ load_dotenv()
 
 cliente = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
 VOICE_ID = os.getenv("ELEVENLABS_VOICE_ID")
+VOICE_ID_LYRA = os.getenv("ELEVENLABS_VOICE_ID_LYRA")
 
-def falar(texto: str):
+def falar(texto: str, presence: str = "atlas"):
     """Converte texto em áudio e reproduz."""
     try:
+        voice_id = VOICE_ID_LYRA if presence == "lyra" else VOICE_ID
         audio = cliente.text_to_speech.convert(
-            voice_id=VOICE_ID,
+            voice_id=voice_id,
             text=texto,
             model_id="eleven_multilingual_v2",
             output_format="mp3_44100_128"
