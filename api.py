@@ -169,9 +169,9 @@ def chat_atlas(msg: Mensagem):
     _adicionar_historico("atlas", "assistant", resposta.texto)
     registrar_interacao(
         texto_usuario=msg.texto,
-        resposta=resposta.texto,
+        resposta=texto_final,
         intencao=resposta.intencao.value,
-        respondente="atlas"
+        respondente="usuario"
     )
     latencia = int((time.time() - t0) * 1000)
 
@@ -224,9 +224,9 @@ def chat_lyra(msg: Mensagem):
     _adicionar_historico("lyra", "assistant", resposta.texto)
     registrar_interacao(
         texto_usuario=msg.texto,
-        resposta=resposta.texto,
+        resposta=texto_final,
         intencao=resposta.intencao.value,
-        respondente="lyra"
+        respondente="usuario"
     )
     latencia = int((time.time() - t0) * 1000)
 

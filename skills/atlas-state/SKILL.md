@@ -46,11 +46,16 @@ uvicorn api:app --reload --port 8000
 - Verifica alarmes e lembretes independente do dashboard estar aberto
 - Dispara voz diretamente do backend quando o horario chega
 
+**Degrau 4 — Memoria de longo prazo real** (concluido 11/05)
+- funcionalidades/memoria_persistente.py — registrar_interacao, obter_historico
+- _montar_entrada injeta ultimas 5 interacoes da memoria longa como prefixo do historico
+- chat_atlas e chat_lyra registram cada interacao apos resposta
+- Atlas e Lyra agora lembram do historico entre sessoes distintas
+
 ### Proximos Degraus
 
 | Degrau | Status |
 |---|---|
-| 4 — Memoria de longo prazo real | pendente |
 | 5 — Lyra integrada com Atlas | pendente |
 | 6 — Dashboard na pasta do projeto | pendente |
 | 7 — Script iniciar.bat | pendente |
@@ -86,6 +91,7 @@ funcionalidades/extrator_alarme.py  — Regex alarme
 funcionalidades/extrator_lembrete.py — Regex lembrete
 funcionalidades/alarmes.py          — CRUD alarmes (JSON)
 funcionalidades/lembretes.py        — CRUD lembretes (JSON)
+funcionalidades/memoria_persistente.py — Memoria de longo prazo entre sessoes
 nucleos/atlas_nucleo.py             — Nucleo Atlas (Claude Haiku)
 nucleos/lyra_nucleo.py              — Nucleo Lyra (Claude Haiku)
 ```
@@ -99,4 +105,4 @@ ELEVENLABS_VOICE_ID          — voz do Atlas
 ELEVENLABS_VOICE_ID_LYRA     — voz da Lyra
 ```
 
-*Atualizado: 11/05/2026 — Degrau 3 concluido*
+*Atualizado: 11/05/2026 — Degrau 4 concluido*
