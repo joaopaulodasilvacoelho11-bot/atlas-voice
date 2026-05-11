@@ -5,8 +5,9 @@
 import sys
 import os
 from datetime import datetime
+from contextlib import asynccontextmanager
+import asyncio
 import time
-import json
 import json
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -19,7 +20,47 @@ from nucleos.atlas_nucleo import AtlasNucleo, Entrada, Intencao
 from nucleos.lyra_nucleo import LyraNucleo
 from pipeline.base_2_5_classificador_intencao_oficial import classificar
 
-app = FastAPI(title="Atlas Voice API", version="1.0")
+
+# ── Degrau 3 — Loop de verificação backend ────────────────────
+async def _loop_verificacao():
+    """Verifica alarmes e lembretes a cada 30s, independente do dashboard."""
+    while True:
+        await asyncio.sleep(30)
+        # Alarmes
+        try:
+            from funcionalidades.alarmes import verificar_alarmes as _ver_alarmes
+            disparados_a = _ver_alarmes()
+            for item in disparados_a:
+                try:
+                    from voz.saida import falar
+                    falar(item.get("mensagem", "Alarme!"), presence="atlas")
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        # Lembretes
+        try:
+            from funcionalidades.lembretes import verificar_lembretes as _ver_lembretes
+            disparados_l = _ver_lembretes()
+            for item in disparados_l:
+                try:
+                    from voz.saida import falar
+                    falar(item.get("mensagem", "Lembrete!"), presence="lyra")
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+
+@asynccontextmanager
+async def lifespan(app):
+    task = asyncio.create_task(_loop_verificacao())
+    yield
+    task.cancel()
+
+
+# ── App ───────────────────────────────────────────────────────
+app = FastAPI(title="Atlas Voice API", version="1.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -88,7 +129,6 @@ def _montar_entrada(texto: str, nucleo: str) -> Entrada:
         intencao = mapa.get(resultado.intencao.value, Intencao.DESCONHECIDA)
     except Exception:
         intencao = Intencao.DESCONHECIDA
-    # Injeta histórico nos parâmetros
     historico = list(_historico[nucleo])
     return Entrada(texto=texto, intencao=intencao, parametros={"historico": historico})
 
@@ -145,14 +185,10 @@ def chat_atlas(msg: Mensagem):
         from funcionalidades.extrator_lembrete import tentar_extrair_lembrete
         from funcionalidades.lembretes import criar_lembrete as _criar_lembrete
         dados_l = tentar_extrair_lembrete(msg.texto)
-        print(f"[DEBUG LEMBRETE] texto: {msg.texto!r}")
-        print(f"[DEBUG LEMBRETE] dados: {dados_l}")
         if dados_l:
             resultado_l = _criar_lembrete(dados_l["horario"], dados_l["mensagem"], dados_l["prioridade"])
             lembrete_criado = resultado_l
-            horario_l = dados_l["horario"]
-            if "lembrete" not in texto_final.lower() and horario_l not in texto_final:
-                texto_final = texto_final + f"\nLembrete registrado para {horario_l}."
+            texto_final = f"Lembrete registrado para {dados_l['horario']}: {dados_l['mensagem']}."
     except Exception:
         pass
 
@@ -189,6 +225,7 @@ def chat_lyra(msg: Mensagem):
         pass
 
     # Degrau 2: Lembrete real via IA
+    texto_final = resposta.texto
     lembrete_criado = None
     try:
         from funcionalidades.extrator_lembrete import tentar_extrair_lembrete
@@ -197,11 +234,12 @@ def chat_lyra(msg: Mensagem):
         if dados_l:
             resultado_l = _criar_lembrete(dados_l["horario"], dados_l["mensagem"], dados_l["prioridade"])
             lembrete_criado = resultado_l
+            texto_final = f"Lembrete registrado para {dados_l['horario']}: {dados_l['mensagem']}."
     except Exception:
         pass
 
     return {
-        "resposta":        resposta.texto,
+        "resposta":        texto_final,
         "nucleo":          "lyra",
         "intencao":        resposta.intencao.value,
         "executada":       resposta.executada,
