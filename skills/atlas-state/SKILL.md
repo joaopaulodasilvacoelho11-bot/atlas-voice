@@ -58,11 +58,16 @@ uvicorn api:app --reload --port 8000
 - obter_historico sem filtro — Atlas e Lyra leem da mesma memoria
 - Trocar de nucleo nao perde historico nem relacionamento
 
+**Degrau 6 — Dashboard servido pelo FastAPI** (concluido 11/05)
+- GET /dashboard retorna atlas_dashboard.html via FileResponse
+- _BASE_DIR = pathlib.Path(__file__).parent
+- Imports: StaticFiles, FileResponse, pathlib
+- Dashboard acessivel em http://127.0.0.1:8000/dashboard
+
 ### Proximos Degraus
 
 | Degrau | Status |
 |---|---|
-| 6 — Dashboard na pasta do projeto | pendente |
 | 7 — Script iniciar.bat | pendente |
 | 8 — Testes de uso real + correcoes | pendente |
 | 9 — Documentacao + tag v1.0 | pendente |
@@ -110,4 +115,4 @@ ELEVENLABS_VOICE_ID          — voz do Atlas
 ELEVENLABS_VOICE_ID_LYRA     — voz da Lyra
 ```
 
-*Atualizado: 11/05/2026 — Degrau 5 concluido*
+*Atualizado: 11/05/2026 — Degrau 6 concluido*
