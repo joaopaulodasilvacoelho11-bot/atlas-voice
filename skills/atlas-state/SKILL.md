@@ -52,11 +52,16 @@ uvicorn api:app --reload --port 8000
 - chat_atlas e chat_lyra registram cada interacao apos resposta
 - Atlas e Lyra agora lembram do historico entre sessoes distintas
 
+**Degrau 5 — Memoria unificada do usuario** (concluido 11/05)
+- registrar_interacao com respondente="usuario" em chat_atlas e chat_lyra
+- resposta gravada e texto_final (ja com confirmacoes de alarme/lembrete)
+- obter_historico sem filtro — Atlas e Lyra leem da mesma memoria
+- Trocar de nucleo nao perde historico nem relacionamento
+
 ### Proximos Degraus
 
 | Degrau | Status |
 |---|---|
-| 5 — Lyra integrada com Atlas | pendente |
 | 6 — Dashboard na pasta do projeto | pendente |
 | 7 — Script iniciar.bat | pendente |
 | 8 — Testes de uso real + correcoes | pendente |
@@ -105,4 +110,4 @@ ELEVENLABS_VOICE_ID          — voz do Atlas
 ELEVENLABS_VOICE_ID_LYRA     — voz da Lyra
 ```
 
-*Atualizado: 11/05/2026 — Degrau 4 concluido*
+*Atualizado: 11/05/2026 — Degrau 5 concluido*

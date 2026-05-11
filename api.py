@@ -14,7 +14,10 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
+import pathlib
 
 from nucleos.atlas_nucleo import AtlasNucleo, Entrada, Intencao
 from nucleos.lyra_nucleo import LyraNucleo
@@ -61,6 +64,8 @@ async def lifespan(app):
 
 
 # ── App ───────────────────────────────────────────────────────
+_BASE_DIR = pathlib.Path(__file__).parent
+
 app = FastAPI(title="Atlas Voice API", version="1.0", lifespan=lifespan)
 
 app.add_middleware(
@@ -143,6 +148,11 @@ def _montar_entrada(texto: str, nucleo: str) -> Entrada:
 def status():
     uptime = int((datetime.now() - _sessao_inicio).total_seconds())
     return {"status": "online", "sistema": "Atlas Voice", "versao": "1.0", "uptime_segundos": uptime}
+
+
+@app.get("/dashboard")
+def dashboard():
+    return FileResponse(_BASE_DIR / "atlas_dashboard.html")
 
 
 @app.get("/sessao")
