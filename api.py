@@ -19,6 +19,7 @@ from pydantic import BaseModel
 from nucleos.atlas_nucleo import AtlasNucleo, Entrada, Intencao
 from nucleos.lyra_nucleo import LyraNucleo
 from pipeline.base_2_5_classificador_intencao_oficial import classificar
+from funcionalidades.memoria_persistente import registrar_interacao, obter_historico
 
 
 # ── Degrau 3 — Loop de verificação backend ────────────────────
@@ -129,7 +130,12 @@ def _montar_entrada(texto: str, nucleo: str) -> Entrada:
         intencao = mapa.get(resultado.intencao.value, Intencao.DESCONHECIDA)
     except Exception:
         intencao = Intencao.DESCONHECIDA
-    historico = list(_historico[nucleo])
+    memoria_longa = obter_historico(limite=5)
+    historico_memoria = []
+    for item in memoria_longa:
+        historico_memoria.append({"role": "user", "content": item["usuario"]})
+        historico_memoria.append({"role": "assistant", "content": item["resposta"]})
+    historico = historico_memoria + list(_historico[nucleo])
     return Entrada(texto=texto, intencao=intencao, parametros={"historico": historico})
 
 
@@ -161,6 +167,12 @@ def chat_atlas(msg: Mensagem):
     entrada  = _montar_entrada(msg.texto, "atlas")
     resposta = atlas.processar(entrada)
     _adicionar_historico("atlas", "assistant", resposta.texto)
+    registrar_interacao(
+        texto_usuario=msg.texto,
+        resposta=resposta.texto,
+        intencao=resposta.intencao.value,
+        respondente="atlas"
+    )
     latencia = int((time.time() - t0) * 1000)
 
     # Degrau 1: Alarme real via IA
@@ -210,6 +222,12 @@ def chat_lyra(msg: Mensagem):
     entrada  = _montar_entrada(msg.texto, "lyra")
     resposta = lyra.processar(entrada)
     _adicionar_historico("lyra", "assistant", resposta.texto)
+    registrar_interacao(
+        texto_usuario=msg.texto,
+        resposta=resposta.texto,
+        intencao=resposta.intencao.value,
+        respondente="lyra"
+    )
     latencia = int((time.time() - t0) * 1000)
 
     # Degrau 1: Alarme real via IA
