@@ -177,12 +177,6 @@ def chat_atlas(msg: Mensagem):
     entrada  = _montar_entrada(msg.texto, "atlas")
     resposta = atlas.processar(entrada)
     _adicionar_historico("atlas", "assistant", resposta.texto)
-    registrar_interacao(
-        texto_usuario=msg.texto,
-        resposta=texto_final,
-        intencao=resposta.intencao.value,
-        respondente="usuario"
-    )
     latencia = int((time.time() - t0) * 1000)
 
     # Degrau 1: Alarme real via IA
@@ -214,6 +208,13 @@ def chat_atlas(msg: Mensagem):
     except Exception:
         pass
 
+    registrar_interacao(
+        texto_usuario=msg.texto,
+        resposta=texto_final,
+        intencao=resposta.intencao.value,
+        respondente="usuario"
+    )
+
     return {
         "resposta":        texto_final,
         "nucleo":         "atlas",
@@ -232,12 +233,6 @@ def chat_lyra(msg: Mensagem):
     entrada  = _montar_entrada(msg.texto, "lyra")
     resposta = lyra.processar(entrada)
     _adicionar_historico("lyra", "assistant", resposta.texto)
-    registrar_interacao(
-        texto_usuario=msg.texto,
-        resposta=texto_final,
-        intencao=resposta.intencao.value,
-        respondente="usuario"
-    )
     latencia = int((time.time() - t0) * 1000)
 
     # Degrau 1: Alarme real via IA
@@ -265,6 +260,13 @@ def chat_lyra(msg: Mensagem):
             texto_final = f"Lembrete registrado para {dados_l['horario']}: {dados_l['mensagem']}."
     except Exception:
         pass
+
+    registrar_interacao(
+        texto_usuario=msg.texto,
+        resposta=texto_final,
+        intencao=resposta.intencao.value,
+        respondente="usuario"
+    )
 
     return {
         "resposta":        texto_final,
@@ -370,6 +372,29 @@ def voz_ouvir():
         return {"status": "ok", "texto": texto}
     except Exception as e:
         return {"status": "erro", "texto": "", "detalhe": str(e)}
+
+
+from voz.presenca import iniciar_presenca, parar_presenca, definir_presence, esta_ativo
+
+
+@app.post("/presenca/iniciar")
+async def presenca_iniciar(msg: Mensagem):
+    if esta_ativo():
+        return {"status": "ja_ativo"}
+    definir_presence(msg.presence)
+    asyncio.create_task(iniciar_presenca())
+    return {"status": "iniciado", "presence": msg.presence}
+
+
+@app.post("/presenca/parar")
+async def presenca_parar():
+    parar_presenca()
+    return {"status": "parado"}
+
+
+@app.get("/presenca/status")
+def presenca_status():
+    return {"ativo": esta_ativo()}
 
 
 @app.post("/sessao/resetar")

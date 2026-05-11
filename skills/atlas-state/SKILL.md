@@ -64,11 +64,14 @@ uvicorn api:app --reload --port 8000
 - Imports: StaticFiles, FileResponse, pathlib
 - Dashboard acessivel em http://127.0.0.1:8000/dashboard
 
+**Degrau 7 — Script iniciar.bat** (concluido 11/05)
+- iniciar.bat na raiz do projeto — duplo clique sobe tudo
+- conda activate atlasvoice -> abre browser em /dashboard -> uvicorn api:app --port 8000
+
 ### Proximos Degraus
 
 | Degrau | Status |
 |---|---|
-| 7 — Script iniciar.bat | pendente |
 | 8 — Testes de uso real + correcoes | pendente |
 | 9 — Documentacao + tag v1.0 | pendente |
 
@@ -115,4 +118,4 @@ ELEVENLABS_VOICE_ID          — voz do Atlas
 ELEVENLABS_VOICE_ID_LYRA     — voz da Lyra
 ```
 
-*Atualizado: 11/05/2026 — Degrau 6 concluido*
+*Atualizado: 11/05/2026 — Degrau 7 concluido*
