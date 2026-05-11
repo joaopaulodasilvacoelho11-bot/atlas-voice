@@ -68,11 +68,17 @@ uvicorn api:app --reload --port 8000
 - iniciar.bat na raiz do projeto — duplo clique sobe tudo
 - conda activate atlasvoice -> abre browser em /dashboard -> uvicorn api:app --port 8000
 
+**Degrau 8 — Modo presenca continua** (concluido 11/05)
+- voz/presenca.py — loop: ouvir -> processar -> falar -> ouvir
+- POST /presenca/iniciar — ativa o loop com o presence informado
+- POST /presenca/parar — encerra o loop
+- GET /presenca/status — retorna se esta ativo
+- Fix: registrar_interacao movido para apos Degrau 2, garantindo texto_final correto
+
 ### Proximos Degraus
 
 | Degrau | Status |
 |---|---|
-| 8 — Testes de uso real + correcoes | pendente |
 | 9 — Documentacao + tag v1.0 | pendente |
 
 ## Endpoints da API
@@ -118,4 +124,4 @@ ELEVENLABS_VOICE_ID          — voz do Atlas
 ELEVENLABS_VOICE_ID_LYRA     — voz da Lyra
 ```
 
-*Atualizado: 11/05/2026 — Degrau 7 concluido*
+*Atualizado: 11/05/2026 — Degrau 8 concluido — resta apenas o Degrau 9*
