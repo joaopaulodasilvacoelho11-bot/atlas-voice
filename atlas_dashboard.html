@@ -178,6 +178,15 @@ html,body{height:100%;background:#000;color:var(--text);font-family:'Inter',syst
 .dock-hint{display:flex;gap:18px;justify-content:center;margin-top:12px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-faint);letter-spacing:.1em}
 .dock-hint kbd{display:inline-block;padding:1px 5px;background:rgba(77,217,255,.1);border:1px solid var(--line);border-radius:3px;font-family:inherit;font-size:9px;color:var(--cyan-bright);margin:0 2px}
 
+/* ── Estado do JP ── */
+.estado-panel{display:flex;flex-direction:column;gap:6px;width:100%;margin-top:8px}
+.estado-item{display:flex;flex-direction:column;gap:2px}
+.estado-label{font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.2em;color:var(--text-faint)}
+.estado-value{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--cyan-bright);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px}
+.estado-value.lyra-val{color:var(--lyra-bright)}
+.estado-value.amber-val{color:var(--amber)}
+.estado-value.empty{color:rgba(157,195,235,0.25);font-size:10px}
+
 /* ── History Panel ── */
 .hist-btn{position:fixed;right:16px;bottom:56px;z-index:9999;display:flex;align-items:center;gap:7px;padding:8px 14px;background:rgba(10,28,60,.85);border:1px solid rgba(77,217,255,.4);color:#4dd9ff;font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:.2em;border-radius:6px;cursor:pointer;transition:all .2s}
 .hist-btn:hover{background:rgba(77,217,255,.15);box-shadow:0 0 16px rgba(77,217,255,.3)}
@@ -811,6 +820,7 @@ function App(){
   const [voiceEnabled,setVoiceEnabled]=React.useState(true);
   const [screensaver,setScreensaver]=React.useState(false);
   const [histOpen,setHistOpen]=React.useState(false);
+  const [estado,setEstado]=React.useState({proximoAlarme:null,lembretesPendentes:0,ultimaMemoria:null});
   const histEndRef=React.useRef(null);
   const ssTimer=React.useRef(null);
   const inputRef=React.useRef(null);
@@ -819,6 +829,27 @@ function App(){
     if(ssTimer.current)clearTimeout(ssTimer.current);
     setScreensaver(false);
     ssTimer.current=setTimeout(()=>setScreensaver(true),30000);
+  },[]);
+
+  React.useEffect(()=>{
+    const fetchEstado=async()=>{
+      try{
+        const [resA,resL]=await Promise.all([
+          fetch("http://127.0.0.1:8000/alarmes"),
+          fetch("http://127.0.0.1:8000/lembretes"),
+        ]);
+        const alarmes=resA.ok?await resA.json():[];
+        const lembretes=resL.ok?await resL.json():[];
+        const agora=new Date();
+        const ativos=alarmes.filter?.(a=>a.ativo!==false)||[];
+        const proxAlarme=ativos.sort((a,b)=>a.horario>b.horario?1:-1)[0]||null;
+        const pendentes=lembretes.filter?.(l=>!l.concluido)?.length||0;
+        setEstado({proximoAlarme:proxAlarme,lembretesPendentes:pendentes,ultimaMemoria:null});
+      }catch(e){}
+    };
+    fetchEstado();
+    const id=setInterval(fetchEstado,15000);
+    return()=>clearInterval(id);
   },[]);
 
   React.useEffect(()=>{
@@ -1089,7 +1120,6 @@ function App(){
                 </filter>
               </defs>
               {/* Aliança ATLAS */}
-              <ellipse cx="28" cy="40" rx="18" ry="23" fill="none" stroke="#000814" strokeWidth="10" opacity="0.6"/>
               <ellipse cx="27" cy="40" rx="18" ry="23" fill="none" stroke="url(#bmA)" strokeWidth="9" filter="url(#bmFA)" opacity="0.97"/>
               <ellipse cx="27" cy="40" rx="18" ry="23" fill="none" stroke="url(#bmAS)" strokeWidth="6" opacity="0.7"/>
               {/* Aliança LYRA */}
@@ -1126,6 +1156,26 @@ function App(){
         <SideStat label="LATÊNCIA" value={latencia} unit="ms"/>
         <SideStat label="SINAL" value="98" unit="%"/>
         <SideStat label="MODELO" value={presence==="atlas"?"ATLAS-7":"LYRA-3"}/>
+        <div className="side-divider"/>
+        <div className="estado-panel">
+          <div className="estado-item">
+            <div className="estado-label">PRÓXIMO ALARME</div>
+            {estado.proximoAlarme
+              ? <div className="estado-value amber-val">{String(estado.proximoAlarme.horario||"").slice(11,16)} — {estado.proximoAlarme.mensagem||"Alarme"}</div>
+              : <div className="estado-value empty">nenhum</div>
+            }
+          </div>
+          <div className="estado-item">
+            <div className="estado-label">LEMBRETES</div>
+            <div className={`estado-value${estado.lembretesPendentes>0?" amber-val":" empty"}`}>
+              {estado.lembretesPendentes>0?`${estado.lembretesPendentes} pendente${estado.lembretesPendentes>1?"s":""}` : "nenhum"}
+            </div>
+          </div>
+          <div className="estado-item">
+            <div className="estado-label">SESSÃO</div>
+            <div className="estado-value">{sessao.uptime}</div>
+          </div>
+        </div>
         <div className="side-divider"/>
         <div className="side-channel">
           <div className="side-channel-label">CANAL</div>
