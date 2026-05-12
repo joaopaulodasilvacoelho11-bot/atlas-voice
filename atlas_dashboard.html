@@ -1201,6 +1201,22 @@ function App(){
         <SideStat label="MEMÓRIA" value="14" unit="MB"/>
         <SideStat label="CONTEXTO" value={presence==="atlas"?sessao.mensagens_atlas:sessao.mensagens_lyra} unit="msg"/>
         <SideStat label="SESSÃO" value={sessao.uptime}/>
+        <div className="side-divider"/>
+        <div className="estado-panel" style={{alignItems:"flex-end"}}>
+          <div className="estado-item" style={{alignItems:"flex-end"}}>
+            <div className="estado-label">ALARME</div>
+            {estado.proximoAlarme
+              ? <div className="estado-value amber-val" style={{textAlign:"right"}}>{String(estado.proximoAlarme.horario||"").slice(11,16)}</div>
+              : <div className="estado-value empty" style={{textAlign:"right"}}>—</div>
+            }
+          </div>
+          <div className="estado-item" style={{alignItems:"flex-end"}}>
+            <div className="estado-label">LEMBRETES</div>
+            <div className={`estado-value${estado.lembretesPendentes>0?" amber-val":" empty"}`} style={{textAlign:"right"}}>
+              {estado.lembretesPendentes>0?`${estado.lembretesPendentes} pendente${estado.lembretesPendentes>1?"s":""}` : "—"}
+            </div>
+          </div>
+        </div>
       </aside>
 
       {/* STAGE CENTRAL — NÚCLEO */}
