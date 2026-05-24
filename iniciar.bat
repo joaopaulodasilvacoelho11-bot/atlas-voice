@@ -1,15 +1,20 @@
 @echo off
 title Atlas Voice
-echo.
-echo  ╔══════════════════════════════╗
-echo  ║       ATLAS VOICE v1.0       ║
-echo  ╚══════════════════════════════╝
-echo.
-echo  Iniciando servidor...
-
+cd /d C:\Users\Gleida\Desktop\atlas-voice-v1
 call conda activate atlasvoice
 
-start "" http://127.0.0.1:8000/dashboard
+echo.
+echo  ██████████████████████████████████████
+echo   ATLAS VOICE — Iniciando...
+echo  ██████████████████████████████████████
+echo.
 
-cd /d "%~dp0"
+start "" "http://127.0.0.1:8000/dashboard"
+
+:loop
+echo [Atlas] Backend iniciando...
 uvicorn api:app --port 8000
+echo.
+echo [Atlas] Backend caiu. Reiniciando em 3 segundos...
+timeout /t 3 /nobreak >nul
+goto loop

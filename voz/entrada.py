@@ -19,8 +19,8 @@ if not os.path.exists(_ffmpeg_dst):
 
 os.environ["PATH"] = _ffmpeg_dir + os.pathsep + os.environ["PATH"]
 
-# Carrega modelo Whisper
-modelo = whisper.load_model("small")
+# Carrega modelo Whisper — tiny é 4x mais rápido que small em CPU
+modelo = whisper.load_model("tiny")
 
 # Carrega modelo Silero VAD
 _vad_model, _vad_utils = torch.hub.load(
@@ -32,9 +32,10 @@ _vad_model, _vad_utils = torch.hub.load(
 (get_speech_timestamps, _, read_audio, *_) = _vad_utils
 
 TAXA = 16000
-SILENCIO_APOS_FALA = 1.5   # segundos de silêncio para encerrar
+SILENCIO_APOS_FALA = 0.8   # segundos de silêncio para encerrar
 DURACAO_MAXIMA    = 15      # segundos máximos de captura
 CHUNK             = 512     # frames por chunk (~32ms a 16kHz)
+LIMIAR_VAD        = 0.3     # sensível para microfone de notebook
 
 
 def ouvir() -> str:
@@ -55,7 +56,7 @@ def ouvir() -> str:
             # Silero VAD — detecta se há fala neste chunk
             tensor = torch.tensor(chunk_np, dtype=torch.float32)
             prob   = _vad_model(tensor, TAXA).item()
-            tem_fala = prob > 0.5
+            tem_fala = prob > LIMIAR_VAD
 
             if tem_fala:
                 if not gravando:
@@ -82,8 +83,17 @@ def ouvir() -> str:
         nome_arquivo = f.name
         wav.write(nome_arquivo, TAXA, audio_int16)
 
-    resultado = modelo.transcribe(nome_arquivo, language="pt", fp16=False)
+    # beam_size=1 + condition_on_previous_text=False — transcrição mais rápida em CPU
+    resultado = modelo.transcribe(
+        nome_arquivo,
+        language="pt",
+        fp16=False,
+        beam_size=1,
+        condition_on_previous_text=False,
+    )
     texto = resultado["text"].strip()
+
+    os.unlink(nome_arquivo)
 
     # Filtro de transcrição suja
     if _re.search(r'[^\x00-\x7Fàáâãäéêíóôõúüçñ\s]', texto):

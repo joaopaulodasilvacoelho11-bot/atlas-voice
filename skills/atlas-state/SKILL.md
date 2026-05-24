@@ -68,11 +68,14 @@ uvicorn api:app --reload --port 8000
 - iniciar.bat na raiz do projeto — duplo clique sobe tudo
 - conda activate atlasvoice -> abre browser em /dashboard -> uvicorn api:app --port 8000
 
-**Degrau 8 — Modo presenca continua** (concluido 11/05)
-- voz/presenca.py — loop: ouvir -> processar -> falar -> ouvir
-- POST /presenca/iniciar — ativa o loop com o presence informado
-- POST /presenca/parar — encerra o loop
-- GET /presenca/status — retorna se esta ativo
+**Degrau 8 — Modo presenca continua + wake word** (concluido 11/05)
+- voz/presenca.py — standby -> wake word -> ouve comando -> processa -> falar -> standby
+- Wake words: "atlas", "atlas,", "atleis" / "lyra", "lyra,", "lira", "lira,"
+- Texto curto (<= 2 palavras) -> ouve segundo utterance como comando
+- Texto longo (> 2 palavras) -> processa o texto completo direto
+- Grace period 30s: apos wake word aceita comandos sem repetir a chamada
+- falar() protegido com try/except — erro de TTS nao quebra o loop
+- POST /presenca/iniciar, POST /presenca/parar, GET /presenca/status
 - Fix: registrar_interacao movido para apos Degrau 2, garantindo texto_final correto
 
 ### Proximos Degraus
@@ -124,4 +127,4 @@ ELEVENLABS_VOICE_ID          — voz do Atlas
 ELEVENLABS_VOICE_ID_LYRA     — voz da Lyra
 ```
 
-*Atualizado: 11/05/2026 — Degrau 8 concluido — resta apenas o Degrau 9*
+*Atualizado: 11/05/2026 — Degrau 8 concluido (wake word + presenca continua) — resta apenas o Degrau 9*
