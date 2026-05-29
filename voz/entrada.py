@@ -1,106 +1,83 @@
-import whisper
-import sounddevice as sd
-import tempfile
-import scipy.io.wavfile as wav
-import imageio_ffmpeg
-import numpy as np
 import os
-import shutil
-import torch
-import re as _re
+import wave
+import tempfile
+import sounddevice as sd
+import numpy as np
+from dotenv import load_dotenv
+from groq import Groq
 
-# Copia o ffmpeg do imageio para um local com nome correto
-_ffmpeg_src = imageio_ffmpeg.get_ffmpeg_exe()
-_ffmpeg_dir = os.path.dirname(_ffmpeg_src)
-_ffmpeg_dst = os.path.join(_ffmpeg_dir, "ffmpeg.exe")
+load_dotenv()
 
-if not os.path.exists(_ffmpeg_dst):
-    shutil.copy(_ffmpeg_src, _ffmpeg_dst)
+TAXA_AMOSTRAGEM = 16000
+DURACAO_CHUNK = 0.1
+SILENCIO_APOS_FALA = 1.0
+DURACAO_MAXIMA = 15
+LIMIAR_ENERGIA = 0.01
 
-os.environ["PATH"] = _ffmpeg_dir + os.pathsep + os.environ["PATH"]
-
-# Carrega modelo Whisper — tiny é 4x mais rápido que small em CPU
-modelo = whisper.load_model("tiny")
-
-# Carrega modelo Silero VAD
-_vad_model, _vad_utils = torch.hub.load(
-    repo_or_dir="snakers4/silero-vad",
-    model="silero_vad",
-    force_reload=False,
-    trust_repo=True,
-)
-(get_speech_timestamps, _, read_audio, *_) = _vad_utils
-
-TAXA = 16000
-SILENCIO_APOS_FALA = 0.8   # segundos de silêncio para encerrar
-DURACAO_MAXIMA    = 15      # segundos máximos de captura
-CHUNK             = 512     # frames por chunk (~32ms a 16kHz)
-LIMIAR_VAD        = 0.3     # sensível para microfone de notebook
+_groq = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 
 def ouvir() -> str:
-    print("[Atlas] Ouvindo...")
+    print("[ATLAS] Ouvindo...")
 
-    gravando        = False
-    audio_capturado = []
+    amostras_chunk = int(TAXA_AMOSTRAGEM * DURACAO_CHUNK)
+    max_chunks = int(DURACAO_MAXIMA / DURACAO_CHUNK)
+    chunks_silencio_max = int(SILENCIO_APOS_FALA / DURACAO_CHUNK)
+
+    gravando = []
     chunks_silencio = 0
-    chunks_maximos  = int(DURACAO_MAXIMA * TAXA / CHUNK)
-    limiar_silencio = int(SILENCIO_APOS_FALA * TAXA / CHUNK)
-    total_chunks    = 0
+    fala_iniciada = False
 
-    with sd.InputStream(samplerate=TAXA, channels=1, dtype="float32", blocksize=CHUNK) as stream:
-        while total_chunks < chunks_maximos:
-            chunk_audio, _ = stream.read(CHUNK)
-            chunk_np = chunk_audio[:, 0]
+    with sd.InputStream(samplerate=TAXA_AMOSTRAGEM, channels=1, dtype="float32") as stream:
+        for _ in range(max_chunks):
+            chunk, _ = stream.read(amostras_chunk)
+            audio_chunk = chunk[:, 0]
+            energia = np.mean(np.abs(audio_chunk))
 
-            # Silero VAD — detecta se há fala neste chunk
-            tensor = torch.tensor(chunk_np, dtype=torch.float32)
-            prob   = _vad_model(tensor, TAXA).item()
-            tem_fala = prob > LIMIAR_VAD
-
-            if tem_fala:
-                if not gravando:
-                    print("[Atlas] Fala detectada...")
-                    gravando = True
-                audio_capturado.append(chunk_np)
+            if energia > LIMIAR_ENERGIA:
+                fala_iniciada = True
                 chunks_silencio = 0
-            elif gravando:
-                audio_capturado.append(chunk_np)
+                gravando.append(audio_chunk)
+            elif fala_iniciada:
+                gravando.append(audio_chunk)
                 chunks_silencio += 1
-                if chunks_silencio >= limiar_silencio:
+                if chunks_silencio >= chunks_silencio_max:
                     break
 
-            total_chunks += 1
+    if not fala_iniciada or len(gravando) == 0:
+        print("[ATLAS] Nenhuma voz detectada.")
+        return ""
 
-    if not audio_capturado:
-        return "__silencio__"
-
-    print("[Atlas] Processando...")
-    audio_final = np.concatenate(audio_capturado)
+    audio_final = np.concatenate(gravando)
     audio_int16 = (audio_final * 32767).astype(np.int16)
 
-    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
-        nome_arquivo = f.name
-        wav.write(nome_arquivo, TAXA, audio_int16)
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+        tmp_path = tmp.name
+        with wave.open(tmp_path, "wb") as wf:
+            wf.setnchannels(1)
+            wf.setsampwidth(2)
+            wf.setframerate(TAXA_AMOSTRAGEM)
+            wf.writeframes(audio_int16.tobytes())
 
-    # beam_size=1 + condition_on_previous_text=False — transcrição mais rápida em CPU
-    resultado = modelo.transcribe(
-        nome_arquivo,
-        language="pt",
-        fp16=False,
-        beam_size=1,
-        condition_on_previous_text=False,
-    )
-    texto = resultado["text"].strip()
+    try:
+        with open(tmp_path, "rb") as audio_file:
+            transcricao = _groq.audio.transcriptions.create(
+                file=("audio.wav", audio_file.read()),
+                model="whisper-large-v3-turbo",
+                language="pt",
+                response_format="text",
+                prompt="Atlas, Lyra"
+            )
+        texto = transcricao.strip() if isinstance(transcricao, str) else transcricao.text.strip()
+        print(f"[ATLAS] Transcrito: {texto}")
+        return texto
+    except Exception as e:
+        print(f"[ERRO] Groq falhou: {e}")
+        return ""
+    finally:
+        os.unlink(tmp_path)
 
-    os.unlink(nome_arquivo)
 
-    # Filtro de transcrição suja
-    if _re.search(r'[^\x00-\x7Fàáâãäéêíóôõúüçñ\s]', texto):
-        return "__silencio__"
-
-    if not texto or len(texto) < 2:
-        return "__silencio__"
-
-    print(f"[Atlas] Você disse: {texto}")
-    return texto
+if __name__ == "__main__":
+    resultado = ouvir()
+    print(f"Resultado: {resultado}")
