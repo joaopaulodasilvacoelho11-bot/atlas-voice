@@ -1033,6 +1033,7 @@ function App(){
 
   const _WAKE_ATLAS=/\b(atlas|atleis|atla[sz])\b/i;
   const _WAKE_LYRA=/\b(lyra|lira|lira,|lyra,)\b/i;
+  const _APENAS_WAKE_WORD=/^[\s,!?.]*(?:atlas|atleis|atla[sz]|lyra|lira)[\s,!?.]*$/i;
 
   const executarCicloVoz=async(pres)=>{
     if(!modoContinuoRef.current)return;
@@ -1087,6 +1088,9 @@ function App(){
           if(modoContinuoRef.current)setTimeout(()=>executarCicloVoz("lyra"),300);
           return;
         }
+
+        // Texto é só wake word (mesmo núcleo) — ignora, não envia pro chat
+        if(_APENAS_WAKE_WORD.test(textoCapturado))return;
 
         // Comando normal
         setMessages(m=>[...m,{from:"you",text:textoCapturado}]);
