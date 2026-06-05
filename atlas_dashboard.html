@@ -900,6 +900,9 @@ function App(){
   const presenceRef=React.useRef(presence);
   React.useEffect(()=>{ presenceRef.current=presence; },[presence]);
   const loopVozRef=React.useRef(false);
+  const atlasButtonRef=React.useRef(null);
+  const lyraButtonRef=React.useRef(null);
+  const setPresenceRef=React.useRef(setPresence);
 
   React.useEffect(()=>{
     const verificar=async()=>{
@@ -1031,8 +1034,6 @@ function App(){
     setTweak("voiceMode","listening");
   };
 
-  const _WAKE_ATLAS=/\b(atlas|atleis|atla[sz])\b/i;
-  const _WAKE_LYRA=/\b(lyra|lira|lira,|lyra,)\b/i;
   const _APENAS_WAKE_WORD=/^[\s,!?.]*(?:atlas|atleis|atla[sz]|lyra|lira)[\s,!?.]*$/i;
 
   const executarCicloVoz=async(pres)=>{
@@ -1059,38 +1060,23 @@ function App(){
           return;
         }
 
-        // Wake word — troca de núcleo
-        if(_WAKE_ATLAS.test(textoCapturado)&&presenceRef.current!=="atlas"){
-          setPresence("atlas");
-          presenceRef.current="atlas";
-          const msg="Atlas aqui. Pode falar.";
-          setMessages(m=>[...m,{from:"atlas",text:msg}]);
-          if(voiceEnabledRef.current){
-            fetch("http://127.0.0.1:8000/voz/falar",{
-              method:"POST",headers:{"Content-Type":"application/json"},
-              body:JSON.stringify({texto:msg,presence:"atlas"}),
-            }).catch(()=>{});
-          }
-          if(modoContinuoRef.current)setTimeout(()=>executarCicloVoz("atlas"),300);
-          return;
-        }
-        if(_WAKE_LYRA.test(textoCapturado)&&presenceRef.current!=="lyra"){
-          setPresence("lyra");
-          presenceRef.current="lyra";
-          const msg="Lyra aqui. Estou ouvindo.";
-          setMessages(m=>[...m,{from:"lyra",text:msg}]);
-          if(voiceEnabledRef.current){
-            fetch("http://127.0.0.1:8000/voz/falar",{
-              method:"POST",headers:{"Content-Type":"application/json"},
-              body:JSON.stringify({texto:msg,presence:"lyra"}),
-            }).catch(()=>{});
-          }
-          if(modoContinuoRef.current)setTimeout(()=>executarCicloVoz("lyra"),300);
-          return;
-        }
-
-        // Texto é só wake word (mesmo núcleo) — ignora, não envia pro chat
+        // Texto é só wake word isolada — ignora, não envia pro chat
         if(_APENAS_WAKE_WORD.test(textoCapturado))return;
+
+        // Ambas as wake words juntas ("Atlas, Lyra" / "Lyra, Atlas") — responde só como núcleo ativo
+        if(/\b(?:atlas|atleis|atla[sz])\b/i.test(textoCapturado)&&/\b(?:lyra|lira)\b/i.test(textoCapturado)&&textoCapturado.trim().split(/\s+/).length<=4){
+          const nucleo=presenceRef.current;
+          const msg=nucleo==="atlas"?"Estou ouvindo.":"Estou aqui.";
+          setMessages(m=>[...m,{from:nucleo,text:msg}]);
+          if(voiceEnabledRef.current){
+            fetch("http://127.0.0.1:8000/voz/falar",{
+              method:"POST",headers:{"Content-Type":"application/json"},
+              body:JSON.stringify({texto:msg,presence:nucleo}),
+            }).catch(()=>{});
+          }
+          if(modoContinuoRef.current)setTimeout(()=>executarCicloVoz(presenceRef.current),300);
+          return;
+        }
 
         // Comando normal
         setMessages(m=>[...m,{from:"you",text:textoCapturado}]);
@@ -1323,9 +1309,9 @@ function App(){
         <div className="presence-status">
           <div className="presence-status-label" style={{color:presence==="lyra"?"var(--lyra-bright)":"var(--cyan-bright)"}}>{presenceLabel}</div>
           <div className="presence-name">
-            <button type="button" className={`pname-btn ${presence==="atlas"?"active-atlas":""}`} onClick={()=>setPresence("atlas")}>ATLAS</button>
+            <button ref={atlasButtonRef} type="button" className={`pname-btn ${presence==="atlas"?"active-atlas":""}`} onClick={()=>setPresence("atlas")}>ATLAS</button>
             <div className="pname-divider"/>
-            <button type="button" className={`pname-btn ${presence==="lyra"?"active-lyra":""}`} onClick={()=>setPresence("lyra")}>LYRA</button>
+            <button ref={lyraButtonRef} type="button" className={`pname-btn ${presence==="lyra"?"active-lyra":""}`} onClick={()=>setPresence("lyra")}>LYRA</button>
           </div>
         </div>
         <div className="side-divider"/>
