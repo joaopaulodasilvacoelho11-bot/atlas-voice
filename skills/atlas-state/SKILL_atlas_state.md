@@ -10,8 +10,8 @@ description: Skill do projeto Atlas Voice. Use SEMPRE que o JP (João Paulo) ini
 **Projeto:** Atlas Voice  
 **Fundador:** João Paulo da Silva Coelho (JP) — Manaus, Brasil  
 **Repositório:** github.com/joaopaulodasilvacoelho11-bot/atlas-voice  
-**Localização local:** \`C:\Users\Gleida\Desktop\atlas-voice-v1\`  
-**Ambiente:** Anaconda — env: \`atlasvoice\`
+**Localização local:** `C:\Users\Gleida\Desktop\atlas-voice-v1`  
+**Ambiente:** Anaconda — env: `atlasvoice`
 
 ---
 
@@ -26,7 +26,7 @@ description: Skill do projeto Atlas Voice. Use SEMPRE que o JP (João Paulo) ini
 
 ## Como Rodar
 
-\`\`\`bash
+```bash
 # Duplo clique no iniciar.bat — sobe tudo e abre o browser
 C:\Users\Gleida\Desktop\atlas-voice-v1\iniciar.bat
 
@@ -37,11 +37,11 @@ python -m uvicorn api:app --host 0.0.0.0 --port 8000
 
 # Dashboard: http://127.0.0.1:8000/dashboard
 # Sempre Ctrl+Shift+R após mudanças (cache)
-\`\`\`
+```
 
 ---
 
-## Estado Atual — 04/06/2026
+## Estado Atual — 10/06/2026
 
 ### V1 — COMPLETO (tag v1.0 em 12/05/2026)
 
@@ -68,6 +68,14 @@ python -m uvicorn api:app --host 0.0.0.0 --port 8000
 | Wake word dupla ("Atlas, Lyra") responde como núcleo ativo | OK |
 | Troca de núcleo por voz | REMOVIDA (decisão de projeto) |
 
+### V2 — PRÓXIMO PASSO
+
+**Qualidade de voz com ruído ambiente** — Groq ainda alucina com ruído de fundo.
+
+Plano de ataque:
+1. Reforçar filtro pós-transcrição em `voz/entrada.py` — descartar transcrições sem intenção real
+2. Implementar Push-to-Talk (PTT) no dashboard como fallback — botão segurar para falar
+
 ---
 
 ## DECISÃO DE PROJETO — Troca de Núcleo (04/06/2026)
@@ -78,7 +86,7 @@ python -m uvicorn api:app --host 0.0.0.0 --port 8000
 
 **Como trocar agora:** o usuário clica no botão ATLAS/LYRA no topo do dashboard. A memória é preservada na troca (pertence ao usuário, não ao núcleo).
 
-**Histórico técnico (para não repetir):** tentamos flushSync, setTimeout(0), .click() via ref, setPresenceRef — nada resolveu a oscilação. Causa raiz: guards de wake word interceptavam frases contendo "atlas"/"lyra" e o estado oscilava. Solução final: remover os guards de troca, manter só \`_APENAS_WAKE_WORD\` (barra wake word solta caindo no chat) e a troca pelo botão.
+**Histórico técnico (para não repetir):** tentamos flushSync, setTimeout(0), .click() via ref, setPresenceRef — nada resolveu a oscilação. Causa raiz: guards de wake word interceptavam frases contendo "atlas"/"lyra" e o estado oscilava. Solução final: remover os guards de troca, manter só `_APENAS_WAKE_WORD` (barra wake word solta caindo no chat) e a troca pelo botão.
 
 ---
 
@@ -90,7 +98,7 @@ O Modo Presença roda **no dashboard** (não no backend):
 - Loop: standby silencioso -> wake word -> ativo 30s -> standby
 - Desativar por voz: "desativa a voz", "para a voz", "desativar", "desative"
 - Clique no botão PRESENÇA desativa o loop
-- \`executarCicloVoz(pres)\` é o coração do loop — recursivo via setTimeout, usa \`presenceRef.current\`
+- `executarCicloVoz(pres)` é o coração do loop — recursivo via setTimeout, usa `presenceRef.current`
 - **FRÁGIL:** qualquer mudança no dashboard exige cuidado máximo, uma de cada vez
 
 ---
@@ -109,11 +117,11 @@ O Modo Presença roda **no dashboard** (não no backend):
 | Versionamento | GitHub |
 
 ### Voice IDs ElevenLabs
-- Atlas: \`sB7vwSCyX0tQmU24cW2C\`
-- Lyra: \`ZbmOZ3GRVkMFzTTGCFG7\`
+- Atlas: `sB7vwSCyX0tQmU24cW2C`
+- Lyra: `ZbmOZ3GRVkMFzTTGCFG7`
 
 ### STT — Groq API (voz/entrada.py)
-- Modelo: \`whisper-large-v3-turbo\`
+- Modelo: `whisper-large-v3-turbo`
 - Detecção: energia do áudio (LIMIAR_ENERGIA=0.01)
 - prompt="Atlas, Lyra"
 - SILENCIO_APOS_FALA=1.0s, DURACAO_MAXIMA=15s
@@ -128,19 +136,19 @@ O Modo Presença roda **no dashboard** (não no backend):
 
 ## Variáveis de Ambiente (.env)
 
-\`\`\`
+```
 ANTHROPIC_API_KEY
 ELEVENLABS_API_KEY
 ELEVENLABS_VOICE_ID          — voz do Atlas
 ELEVENLABS_VOICE_ID_LYRA     — voz da Lyra
 GROQ_API_KEY                 — STT via Groq Whisper
-\`\`\`
+```
 
 ---
 
 ## Arquivos Principais
 
-\`\`\`
+```
 api.py                                — FastAPI principal, todos os endpoints
 atlas_dashboard.html                  — Dashboard React (tudo em um arquivo)
 iniciar.bat                           — Sobe tudo, reinicia automaticamente se cair
@@ -153,7 +161,7 @@ funcionalidades/lembretes.py          — CRUD lembretes (JSON)
 funcionalidades/memoria_persistente.py — Memória de longo prazo
 nucleos/atlas_nucleo.py               — Núcleo Atlas (Claude Haiku)
 nucleos/lyra_nucleo.py                — Núcleo Lyra (Claude Haiku)
-\`\`\`
+```
 
 ---
 
@@ -170,14 +178,14 @@ nucleos/lyra_nucleo.py                — Núcleo Lyra (Claude Haiku)
 
 ## Armadilhas Conhecidas
 
-- JSX aninhado em ternários de \`className\` causa blank page sem erro visível
-- Desalinhamento de colchetes em \`useEffect\` após \`str_replace\` sequenciais
-- \`const\` em React não tem hoisting — declarar antes de usar
+- JSX aninhado em ternários de `className` causa blank page sem erro visível
+- Desalinhamento de colchetes em `useEffect` após `str_replace` sequenciais
+- `const` em React não tem hoisting — declarar antes de usar
 - Dashboard em cache — usar Ctrl+Shift+R após mudanças
 - Groq alucina com ruído ambiente — filtro ativo em entrada.py
-- Eco: microfone capta voz do Atlas — flag \`atlasfalando\` bloqueia mic durante TTS
+- Eco: microfone capta voz do Atlas — flag `atlasfalando` bloqueia mic durante TTS
 - Mudanças em cascata no dashboard quebram o loop — uma mudança por vez
-- iniciar.bat pode não ativar conda — usar \`python -m uvicorn\` se necessário
+- iniciar.bat pode não ativar conda — usar `python -m uvicorn` se necessário
 - F12 abre calculadora do sistema — usar botão direito -> Inspecionar para DevTools
 - React 18 + createRoot: setPresence dentro de loop async não comita visual de forma confiável (motivo da remoção da troca por voz)
 - Loop executarCicloVoz é recursivo via setTimeout — stale closure é risco, usa presenceRef.current para evitar
@@ -186,7 +194,7 @@ nucleos/lyra_nucleo.py                — Núcleo Lyra (Claude Haiku)
 
 ## Regras do Projeto (Lei)
 
-\`\`\`
+```
 1. Nenhuma versão nasce do zero
 2. Toda base herda 100% das anteriores
 3. Nunca avançar sem fechar a fase atual
@@ -195,7 +203,7 @@ nucleos/lyra_nucleo.py                — Núcleo Lyra (Claude Haiku)
 6. A lógica precisa estar sólida antes de construir interface
 7. Todo código novo herda o anterior
 8. Não ficar preso num módulo — se não resolve, decidir e seguir
-\`\`\`
+```
 
 ---
 
@@ -203,8 +211,8 @@ nucleos/lyra_nucleo.py                — Núcleo Lyra (Claude Haiku)
 
 | Fase | Foco | Status |
 |---|---|---|
-| V1 | Fundação — sistema funcional local | Completo |
-| V2 | Dashboard evoluído + voz melhorada | Em andamento |
+| V1 | Fundação — sistema funcional local | ✅ Completo |
+| V2 | Dashboard evoluído + voz melhorada | 🔄 Em andamento |
 | V3 | Mobile — acesso via Wi-Fi local, Android | Futuro |
 | V4 | Ecossistema — Bluetooth, IoT, câmeras | Futuro |
 | V5 | App próprio — produto público | Futuro |
@@ -213,4 +221,4 @@ nucleos/lyra_nucleo.py                — Núcleo Lyra (Claude Haiku)
 ---
 
 *Atlas Voice — JP Silva — Manaus, Brasil*  
-*Atualizado: 04/06/2026 — commit 53b9d09*
+*Atualizado: 10/06/2026 — commit 53b9d09 — próximo: filtro ruído + Push-to-Talk*
