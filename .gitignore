@@ -3,4 +3,5 @@ __pycache__/
 *.pyc
 *.pyo
 .env 
-"chaves de api/" 
+chaves de api/
+chave/
