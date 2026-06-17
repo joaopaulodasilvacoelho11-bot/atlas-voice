@@ -12,7 +12,7 @@ import json
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from fastapi import FastAPI
+from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -359,6 +359,24 @@ def voz_falar(msg: Mensagem):
         return {"status": "ok"}
     except Exception as e:
         return {"status": "erro", "detalhe": str(e)}
+
+
+@app.post("/voz/ouvir-ptt")
+async def voz_ouvir_ptt(audio: UploadFile = File(...)):
+    """Recebe áudio gravado pelo navegador (PTT) e transcreve via Groq."""
+    try:
+        from voz.entrada import _groq
+        conteudo = await audio.read()
+        transcricao = _groq.audio.transcriptions.create(
+            file=(audio.filename or "audio.webm", conteudo),
+            model="whisper-large-v3-turbo",
+            language="pt",
+            response_format="text",
+        )
+        texto = transcricao.strip() if isinstance(transcricao, str) else transcricao.text.strip()
+        return {"status": "ok", "texto": texto}
+    except Exception as e:
+        return {"status": "erro", "texto": "", "detalhe": str(e)}
 
 
 @app.post("/voz/ouvir")
