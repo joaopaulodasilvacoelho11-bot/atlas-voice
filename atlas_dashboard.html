@@ -1003,55 +1003,53 @@ function App(){
 
   const _CONFIRMA=/acordei|pode parar|cancelar|entendido|\bsim\b|\bok\b|\bpronto\b/i;
 
-  const send=async()=>{
-    const v=chat.trim();
-    if(!v)return;
-    const from=presence;
-    setMessages(m=>[...m,{from:"you",text:v}]);
-    setChat("");
-    if(alarmeAtivo&&_CONFIRMA.test(v)){
+  const enviarAoNucleo = async (texto) => {
+    const from = presenceRef.current;
+    if (alarmeAtivoRef.current && _CONFIRMA.test(texto)) {
       setAlarmeAtivo(null);
-      const despedida="Alarme encerrado. Bom dia, JP.";
-      setMessages(m=>[...m,{from:presence,text:despedida}]);
-      if(voiceEnabled){
-        fetch("http://127.0.0.1:8000/voz/falar",{
-          method:"POST",
-          headers:{"Content-Type":"application/json"},
-          body:JSON.stringify({texto:despedida,presence}),
-        }).catch(()=>{});
+      const despedida = "Alarme encerrado. Bom dia, JP.";
+      setMessages(m => [...m, { from, text: despedida }]);
+      if (voiceEnabledRef.current) {
+        fetch("http://127.0.0.1:8000/voz/falar", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ texto: despedida, presence: from }),
+        }).catch(() => {});
       }
       return;
     }
-    // Núcleo → PROCESSANDO
     setThinking(true);
-    setTweak("voiceMode","thinking");
+    setTweak("voiceMode", "thinking");
     try {
-      const res=await fetch(`http://127.0.0.1:8000/chat/${from}`,{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({texto:v}),
+      const res = await fetch(`http://127.0.0.1:8000/chat/${from}`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ texto }),
       });
-      if(!res.ok) throw new Error("API error");
-      const data=await res.json();
-      // alarme_criado != null → confirmação já embutida em data.resposta; sem msg extra
-      setMessages(m=>[...m,{from,text:data.resposta}]);
-      if(voiceEnabledRef.current){
-        fetch("http://127.0.0.1:8000/voz/falar",{
-          method:"POST",
-          headers:{"Content-Type":"application/json"},
-          body:JSON.stringify({texto:data.resposta,presence:from}),
-        }).catch(()=>{});
+      if (!res.ok) throw new Error("API error");
+      const data = await res.json();
+      setMessages(m => [...m, { from, text: data.resposta }]);
+      if (voiceEnabledRef.current) {
+        fetch("http://127.0.0.1:8000/voz/falar", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ texto: data.resposta, presence: from }),
+        }).catch(() => {});
       }
-      if(data.latencia_ms!==undefined) setLatencia(data.latencia_ms);
-      // Núcleo → FALANDO por 2s, depois OUVINDO
-      setTweak("voiceMode","speaking");
-      setTimeout(()=>setTweak("voiceMode","listening"), 2000);
-    } catch(e){
-      setMessages(m=>[...m,{from,text:"[Sem conexão com o servidor. Rode: uvicorn api:app --port 8000]"}]);
-      setTweak("voiceMode","listening");
+      if (data.latencia_ms !== undefined) setLatencia(data.latencia_ms);
+      setTweak("voiceMode", "speaking");
+      setTimeout(() => setTweak("voiceMode", "listening"), 2000);
+    } catch (e) {
+      setMessages(m => [...m, { from, text: "[Sem conexão com o servidor. Rode: uvicorn api:app --port 8000]" }]);
+      setTweak("voiceMode", "listening");
     } finally {
       setThinking(false);
     }
+  };
+
+  const send = async () => {
+    const v = chat.trim();
+    if (!v) return;
+    setMessages(m => [...m, { from: "you", text: v }]);
+    setChat("");
+    await enviarAoNucleo(v);
   };
 
   const onKey=(e)=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();}};
@@ -1190,8 +1188,11 @@ function App(){
         try {
           const res  = await fetch("/voz/ouvir-ptt", { method: "POST", body: fd });
           const data = await res.json();
-          if (data.status === "ok" && data.texto && data.texto.trim().length > 0)
-            setMessages(m => [...m, { from: "you", text: data.texto.trim() }]);
+          if (data.status === "ok" && data.texto && data.texto.trim().length > 0) {
+            const texto = data.texto.trim();
+            setMessages(m => [...m, { from: "you", text: texto }]);
+            await enviarAoNucleo(texto);
+          }
         } catch (err) { console.error("PTT fetch:", err); }
       };
       recorder.start();
