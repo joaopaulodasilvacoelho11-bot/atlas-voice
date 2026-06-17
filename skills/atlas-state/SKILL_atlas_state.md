@@ -62,32 +62,43 @@ iniciar.bat
 | ElevenLabs atualizado 2.52.0 — método .stream() corrigido | 10/06/2026 |
 | Chave Groq exposta revogada, nova chave no .env | 10/06/2026 |
 | .gitignore protegendo pastas chave/ e chaves de api/ | 10/06/2026 |
+| Endpoint POST /voz/ouvir-ptt em api.py (UploadFile → Groq, reusa _groq de voz/entrada.py) | 17/06/2026 |
+| Fix: python-multipart adicionado ao requirements.txt (dep. obrigatória FastAPI UploadFile) | 17/06/2026 |
+| Botão PTT no dashboard — estilo WhatsApp, desabilitado quando Modo Presença ativo | 17/06/2026 |
+| Refactor: enviarAoNucleo(texto) extraída de send — usada por digitado e PTT sem duplicar | 17/06/2026 |
+| PTT conectado ao núcleo ativo — após transcrição chama /chat/atlas ou /chat/lyra automático | 17/06/2026 |
+| iniciar.bat atualizado para --host 0.0.0.0 (acesso via rede local, não só localhost) | 17/06/2026 |
+| Regra firewall Windows porta 8000, profile=any (resolve bloqueio em redes "Público") | 17/06/2026 |
+| Testado: PTT com Atlas ok, Lyra ok, celular via rede local (192.168.1.8:8000/dashboard) | 17/06/2026 |
+| Commits: 3fda7a5 (backend PTT), cd0f008 (botão PTT), 14b0ed1 (PTT→núcleo) → push origin | 17/06/2026 |
 
 ---
 
 ## O QUE ESTÁ SENDO FEITO AGORA
 
-**V2 — fase de estabilização**
+**PTT (Push-to-Talk) completo e funcional ponta a ponta**
 
-Sistema estável em 10/06/2026. Voz funcionando, filtro de ruído validado com TV ligada. Sem issues críticos abertos.
+Captura no navegador → transcrição via Groq → resposta do núcleo ativo (Atlas/Lyra) → exibição no chat. Validado em PC e em celular via rede local.
 
-Último commit: `a3d3b97` — chore: ignorar pastas de chaves de API no .gitignore
+Pendência conhecida, não bloqueante: o atlas_dashboard.html não é responsivo para tela de celular — ao abrir no navegador mobile, parte do layout (lado direito) fica cortado/com espaço preto, embora toda a funcionalidade (PTT, chat, núcleos) funcione corretamente por trás.
+
+Último commit: `14b0ed1` — feat: conecta PTT ao núcleo ativo (Atlas/Lyra)
 
 ---
 
 ## PRÓXIMO PASSO — O QUE FAZER NA PRÓXIMA SESSÃO
 
-**Implementar Push-to-Talk (PTT) no dashboard**
+**Responsividade mobile do atlas_dashboard.html**
 
-O Modo Presença atual captura tudo que passa pelo limiar de energia — incluindo TV e sons ambiente em português. O PTT é o próximo nível: só captura quando o usuário pressionar e segurar o botão.
+Ao abrir no navegador do celular, parte do layout (lado direito) fica cortado/com espaço preto. Toda a funcionalidade funciona, mas o layout não se adapta à largura da tela.
 
 **Como implementar:**
-1. Adicionar botão PTT no dashboard (segurar = gravando, soltar = processa)
-2. Criar endpoint `POST /voz/ouvir-ptt` no backend que recebe áudio já capturado
-3. O PTT convive com o Modo Presença — são dois modos, usuário escolhe
+1. Adicionar media queries CSS para telas menores (≤768px)
+2. Recolher ou empilhar os painéis laterais (side--left / side--right) em mobile
+3. Garantir que dock, transcript e botão PTT sejam acessíveis em tela pequena
+4. Não alterar nenhuma lógica funcional (PTT, enviarAoNucleo, Modo Presença) — apenas layout/CSS
 
-**Arquivo a mexer:** `atlas_dashboard.html` — adicionar botão PTT na dock inferior  
-**Cuidado:** `executarCicloVoz` é frágil — mexer com cuidado, uma mudança por vez
+**Cuidado:** o JSX usa classes CSS e `style={{}}` inline — mudanças de layout exigem ajuste tanto no `<style>` quanto nos componentes React
 
 ---
 
@@ -200,4 +211,4 @@ funcionalidades/memoria_persistente.py — Memória de longo prazo
 ---
 
 *Atlas Voice — JP Silva — Manaus, Brasil*  
-*Atualizado: 10/06/2026 — commit a3d3b97*
+*Atualizado: 17/06/2026 — commit 14b0ed1*
